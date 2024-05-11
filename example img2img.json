@@ -1,0 +1,196 @@
+{
+  "last_node_id": 42,
+  "last_link_id": 55,
+  "nodes": [
+    {
+      "id": 40,
+      "type": "Hidiffusion_Controlnet_Image",
+      "pos": [
+        1297,
+        415
+      ],
+      "size": {
+        "0": 400,
+        "1": 458
+      },
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 52,
+          "label": "image"
+        },
+        {
+          "name": "mask_image",
+          "type": "IMAGE",
+          "link": 55,
+          "label": "mask_image"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "output_image",
+          "type": "IMAGE",
+          "links": [
+            53
+          ],
+          "shape": 3,
+          "label": "output_image",
+          "slot_index": 0
+        },
+        {
+          "name": "cotrol_image",
+          "type": "IMAGE",
+          "links": null,
+          "shape": 3,
+          "label": "cotrol_image"
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "Hidiffusion_Controlnet_Image"
+      },
+      "widgets_values": [
+        "Lara Croft with brown hair, and is wearing a tank top, a brown backpack. The room is dark and has an old-fashioned decor with a patterned floor and a wall featuring a design with arches and a dark area on the right side, muted color, high detail, 8k high definition award winning",
+        "underexposed, poorly drawn hands, duplicate hands, overexposed, bad art, beginner, amateur, abstract, disfigured, deformed, close up, weird colors, watermark\n",
+        "stabilityai/stable-diffusion-xl-base-1.0",
+        "DDIM",
+        576395805094195,
+        "randomize",
+        40,
+        "F:/test/ComfyUI/models/diffusers/controlnet-canny-sdxl-1.0",
+        12.5,
+        1,
+        "img2img",
+        0.5,
+        0.99,
+        1536,
+        2048
+      ]
+    },
+    {
+      "id": 30,
+      "type": "LoadImage",
+      "pos": [
+        976,
+        542
+      ],
+      "size": {
+        "0": 315,
+        "1": 314
+      },
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            52,
+            55
+          ],
+          "shape": 3,
+          "label": "图像",
+          "slot_index": 0
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": [],
+          "shape": 3,
+          "label": "遮罩",
+          "slot_index": 1
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "lara (2).jpeg",
+        "image"
+      ]
+    },
+    {
+      "id": 28,
+      "type": "Note",
+      "pos": [
+        360,
+        -32
+      ],
+      "size": {
+        "0": 582.7971801757812,
+        "1": 974.1910400390625
+      },
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "properties": {
+        "text": ""
+      },
+      "widgets_values": [
+        "stabilityai/stable-diffusion-xl-base-1.0\nprompt = Standing tall amidst the ruins, a stone golem awakens, vines and flowers sprouting from the crevices in its body.\n\nnegative_prompt = blurry, ugly, duplicate, poorly drawn face, deformed, mosaic, artifacts, bad limbs\n\nguidance_scale=7.5,\nheight=2048, \nwidth=2048,\neta=1.0\nsteps=50\n\nstabilityai/sdxl-turbo\nprompt = In the depths of a mystical forest, a robotic owl with night vision lenses for eyes watches over the nocturnal creatures.\n\nsteps=4,\nheight=1024, \nwidth=1024, \nguidance_scale=0.0\n\nstabilityai/stable-diffusion-2-1-base\nprompt = An adorable happy brown border collie sitting on a bed, high detail.\n\nnegative_prompt = ugly, tiling, out of frame, poorly drawn face, extra limbs, disfigured, deformed, body out of frame, blurry, bad anatomy, blurred, artifacts, bad proportions.\n\nguidance_scale=7.5, height=1024,\nwidth=1024, \neta=1.0, \n\nrunwayml/stable-diffusion-v1-5\nprompt = thick strokes, bright colors, an exotic fox, cute, chibi kawaii. detailed fur, hyperdetailed , big reflective eyes, fairytale, artstation,centered composition, perfect composition, centered, vibrant colors, muted colors, high detailed, 8k.\n\nnegative_prompt = ugly, tiling, poorly drawn face, out of frame, disfigured, deformed, blurry, bad anatomy, blurred.\n\nguidance_scale=7.5,\nheight=1024,\nwidth=1024, \neta=1.0, \n\ndiffusers/controlnet-canny-sdxl-1.0\ntext2img\nprompt = The Joker, high face detail, high detail, muted color, 8k\n\nnegative_prompt = blurry, ugly, duplicate, poorly drawn, deformed, mosaic.\ncontrolnet_conditioning_scale = 0.5\nheight=2048,\nwidth=2048, \nguidance_scale=7.5,\neta=1.0\n\ndiffusers/controlnet-canny-sdxl-1.0\nimg2img\nprompt = Lara Croft with brown hair, and is wearing a tank top, a brown backpack. The room is dark and has an old-fashioned decor with a patterned floor and a wall featuring a design with arches and a dark area on the right side, muted color, high detail, 8k high definition award winning\n\nnegative_prompt = underexposed, poorly drawn hands, duplicate hands, overexposed, bad art, beginner, amateur, abstract, disfigured, deformed, close up, weird colors, watermark\n\ncontrolnet_conditioning_scale = 0.5\nheight=1536,\nwidth=2048,\nstrength=0.99,\nsteps=50,\nguidance_scale=12.5,\neta=1.0\n\ndiffusers/stable-diffusion-xl-1.0-inpainting-0.1\nprompt =  A steampunk explorer in a leather aviator cap and goggles, with a brass telescope in hand, stands amidst towering ancient trees, their roots entwined with intricate gears and pipes.\n\nnegative_prompt = blurry, ugly, duplicate, poorly drawn, deformed, mosaic\n\n\nheight=2048,\nwidth=2048,\nstrength=0.85, \nguidance_scale=12.5,\n eta=1.0\n\n\n\n\n\n"
+      ],
+      "color": "#432",
+      "bgcolor": "#653"
+    },
+    {
+      "id": 41,
+      "type": "PreviewImage",
+      "pos": [
+        1712,
+        527
+      ],
+      "size": [
+        343.70533851554137,
+        352.7990939954077
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 53,
+          "label": "图像"
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "PreviewImage"
+      }
+    }
+  ],
+  "links": [
+    [
+      52,
+      30,
+      0,
+      40,
+      0,
+      "IMAGE"
+    ],
+    [
+      53,
+      40,
+      0,
+      41,
+      0,
+      "IMAGE"
+    ],
+    [
+      55,
+      30,
+      0,
+      40,
+      1,
+      "IMAGE"
+    ]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {},
+  "version": 0.4
+}
