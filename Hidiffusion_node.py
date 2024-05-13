@@ -27,14 +27,12 @@ for search_path in folder_paths.get_folder_paths("diffusers"):
         for root, subdir, files in os.walk(search_path, followlinks=True):
             if "model_index.json" in files:
                 paths.append(os.path.relpath(root, start=search_path))
-            elif "config.json" in files:
-                paths.append(os.path.relpath(root, start=search_path))
+            elif "config.json" in files :
+                if "controlnet-canny-sdxl-1.0" in subdir:
+                    paths.append(os.path.relpath(root, start=search_path))
             else:
-                paths.append(os.path.join(""))
-
-
-
-# print(paths)
+                paths.append("")
+paths = [] + [x for x in paths if x]
 
 scheduler_list = [
     "Euler",
