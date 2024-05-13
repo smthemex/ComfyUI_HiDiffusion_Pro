@@ -30,9 +30,8 @@ for search_path in folder_paths.get_folder_paths("diffusers"):
             elif "config.json" in files:
                 paths.append(os.path.relpath(root, start=search_path))
             else:
-                paths = ["",""]
-    else:
-        paths = ["",""]
+                paths.append(os.path.join(""))
+
 
 
 # print(paths)
