@@ -22,17 +22,18 @@ path_dir = os.path.dirname(dir_path)
 file_path = os.path.dirname(path_dir)
 
 paths = []
+paths_a = []
 for search_path in folder_paths.get_folder_paths("diffusers"):
     if os.path.exists(search_path):
         for root, subdir, files in os.walk(search_path, followlinks=True):
             if "model_index.json" in files:
                 paths.append(os.path.relpath(root, start=search_path))
-            elif "config.json" in files:
-                if "controlnet-canny-sdxl-1.0" in subdir:
-                    paths.append(os.path.relpath(root, start=search_path))
+            if "config.json" in files:
+                paths_a.append(os.path.relpath(root, start=search_path))
+                paths_a = [z for z in paths_a if "controlnet-canny-sdxl-1.0" in z]
 
-if paths!=[]:
-    paths = [] + [x for x in paths if x]
+if paths!=[] or paths_a!=[]:
+    paths = [] + [x for x in paths if x] + [y for y in paths_a if y]
 else:
     paths = ["no model in default diffusers directory",]
 
