@@ -27,12 +27,14 @@ for search_path in folder_paths.get_folder_paths("diffusers"):
         for root, subdir, files in os.walk(search_path, followlinks=True):
             if "model_index.json" in files:
                 paths.append(os.path.relpath(root, start=search_path))
-            elif "config.json" in files :
+            elif "config.json" in files:
                 if "controlnet-canny-sdxl-1.0" in subdir:
                     paths.append(os.path.relpath(root, start=search_path))
-            else:
-                paths.append("")
-paths = [] + [x for x in paths if x]
+
+if paths!=[]:
+    paths = [] + [x for x in paths if x]
+else:
+    paths = ["no model in default diffusers directory",]
 
 scheduler_list = [
     "Euler",
@@ -141,6 +143,8 @@ class Hidiffusion_Text2Image:
 
     def text2image(self, prompt, negative_prompt, model_local_path, repo_id, scheduler, seed, steps, cfg, eta, height,
                    width):
+        if model_local_path == ["no model in default diffusers directory",] and repo_id == "":
+            raise "you need fill repo_id or download model in diffusers dir "
 
         model_path = get_local_path(file_path, model_local_path)
         if repo_id == "":
@@ -260,7 +264,8 @@ class Hidiffusion_Controlnet_Image:
                          mask_image):
 
         scheduler_used = get_sheduler(scheduler)
-
+        if model_local_path == ["no model in default diffusers directory",] and repo_id == "":
+            raise "you need fill repo_id or download model in diffusers dir "
         model_path = get_local_path(file_path, model_local_path)
         controlnet_local_path = get_local_path(file_path, controlnet_local_path)
         if repo_id == "":
