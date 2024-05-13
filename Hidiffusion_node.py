@@ -21,12 +21,20 @@ dir_path = os.path.dirname(os.path.abspath(__file__))
 path_dir = os.path.dirname(dir_path)
 file_path = os.path.dirname(path_dir)
 
-paths=[]
+paths = []
 for search_path in folder_paths.get_folder_paths("diffusers"):
     if os.path.exists(search_path):
         for root, subdir, files in os.walk(search_path, followlinks=True):
             if "model_index.json" in files:
                 paths.append(os.path.relpath(root, start=search_path))
+            elif "config.json" in files:
+                paths.append(os.path.relpath(root, start=search_path))
+            else:
+                paths = ["",""]
+    else:
+        paths = ["",""]
+
+
 # print(paths)
 
 scheduler_list = [
@@ -93,8 +101,9 @@ def get_sheduler(name):
         scheduler = UniPCMultistepScheduler(solver_type="bh2")
     return scheduler
 
-def get_local_path(file_path,model_path):
-    path = os.path.join(file_path, "models", "diffusers",model_path)
+
+def get_local_path(file_path, model_path):
+    path = os.path.join(file_path, "models", "diffusers", model_path)
     model_path = os.path.normpath(path)
     if sys.platform.startswith('win32'):
         model_path = model_path.replace('\\', "/")
@@ -133,14 +142,15 @@ class Hidiffusion_Text2Image:
     FUNCTION = "text2image"
     CATEGORY = "Hidiffusion_Pro"
 
-    def text2image(self, prompt, negative_prompt,model_local_path, repo_id, scheduler, seed, steps, cfg, eta, height, width):
+    def text2image(self, prompt, negative_prompt, model_local_path, repo_id, scheduler, seed, steps, cfg, eta, height,
+                   width):
 
         model_path = get_local_path(file_path, model_local_path)
         if repo_id == "":
             repo_id = model_path
         model_type = repo_id.split("/")[-1]
         scheduler_used = get_sheduler(scheduler)
-        model_list =["stable-diffusion-2-1-base","stable-diffusion-v1-5", "Ghibli-Diffusion"]
+        model_list = ["stable-diffusion-2-1-base", "stable-diffusion-v1-5", "Ghibli-Diffusion"]
         if model_type == "stable-diffusion-xl-base-1.0":
             scheduler = scheduler_used.from_pretrained(repo_id, subfolder="scheduler")
             pipe = StableDiffusionXLPipeline.from_pretrained(repo_id, scheduler=scheduler,
@@ -152,11 +162,11 @@ class Hidiffusion_Text2Image:
             scheduler = scheduler_used.from_pretrained(repo_id, subfolder="scheduler")
             pipe = DiffusionPipeline.from_pretrained(repo_id, scheduler=scheduler,
                                                      torch_dtype=torch.float16, use_safetensors=True,
-                                                     add_watermarker=False,variant="fp16").to("cuda")
+                                                     add_watermarker=False, variant="fp16").to("cuda")
         elif model_type in model_list:
             scheduler = scheduler_used.from_pretrained(repo_id, subfolder="scheduler")
             pipe = DiffusionPipeline.from_pretrained(repo_id, scheduler=scheduler,
-                                                 torch_dtype=torch.float16, variant="fp16").to("cuda")
+                                                     torch_dtype=torch.float16, variant="fp16").to("cuda")
         else:
             raise "Unsupported model_path or repo_id"
 
@@ -246,16 +256,16 @@ class Hidiffusion_Controlnet_Image:
     FUNCTION = "controlnet_image"
     CATEGORY = "Hidiffusion_Pro"
 
-
-    def controlnet_image(self, image, prompt, negative_prompt, model_local_path,repo_id, scheduler, controlnet_local_path,controlnet_repo_id,seed, steps, cfg,
-                         eta,canny_minval,canny_maxval, controlnet_type,
+    def controlnet_image(self, image, prompt, negative_prompt, model_local_path, repo_id, scheduler,
+                         controlnet_local_path, controlnet_repo_id, seed, steps, cfg,
+                         eta, canny_minval, canny_maxval, controlnet_type,
                          controlnet_conditioning_scale, controlnet_strength, height, width,
                          mask_image):
 
         scheduler_used = get_sheduler(scheduler)
 
-        model_path = get_local_path(file_path,model_local_path)
-        controlnet_local_path= get_local_path(file_path,controlnet_local_path)
+        model_path = get_local_path(file_path, model_local_path)
+        controlnet_local_path = get_local_path(file_path, controlnet_local_path)
         if repo_id == "":
             repo_id = model_path
         if controlnet_repo_id == "":
@@ -278,7 +288,6 @@ class Hidiffusion_Controlnet_Image:
             pipe.enable_xformers_memory_efficient_attention()
             pipe.enable_model_cpu_offload()
             pipe.enable_vae_tiling()
-
 
             output_img = pipe(prompt=prompt, image=ori_image, mask_image=mask, height=height, width=width,
                               strength=controlnet_strength, num_inference_steps=steps, seed=seed,
