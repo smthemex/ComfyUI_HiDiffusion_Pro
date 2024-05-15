@@ -1,6 +1,12 @@
 # ComfyUI_HiDiffusion_Pro
 A  HiDiffusion node for ComfyUI
 
+Update
+-----
+2025-05-15 update  
+add XL-lighting\Hyper\LCM Unet model support, it's working,but get bad result. LCM is only valid in text2img node，Lightning and Hyper require selecting an XL large model to take effect   
+增加了lighting、Hyper、LCM的Unet模型支持，但是效果真一般，就当玩玩吧。LCM只在文生图有效。 闪电和Hyper需要选XL大模型才生效   
+
 
 HiDiffusion  From: [link](https://github.com/megvii-research/HiDiffusion)  
 ----
