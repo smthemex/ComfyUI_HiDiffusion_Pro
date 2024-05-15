@@ -9,13 +9,15 @@ import sys
 from diffusers import (StableDiffusionXLPipeline, DiffusionPipeline, DDIMScheduler, ControlNetModel,
                        KDPM2AncestralDiscreteScheduler, LMSDiscreteScheduler,
                        AutoPipelineForInpainting, DPMSolverMultistepScheduler, DPMSolverSinglestepScheduler,
-                       EulerDiscreteScheduler, HeunDiscreteScheduler,
+                       EulerDiscreteScheduler, HeunDiscreteScheduler, UNet2DConditionModel,
                        AutoPipelineForText2Image, StableDiffusionXLControlNetImg2ImgPipeline, KDPM2DiscreteScheduler,
                        EulerAncestralDiscreteScheduler, UniPCMultistepScheduler,
-                       StableDiffusionXLControlNetPipeline)
+                       StableDiffusionXLControlNetPipeline, DDPMScheduler, TCDScheduler, LCMScheduler)
+
 from .hidiffusion.hidiffusion import apply_hidiffusion
 import cv2
 import folder_paths
+from safetensors.torch import load_file
 
 dir_path = os.path.dirname(os.path.abspath(__file__))
 path_dir = os.path.dirname(dir_path)
@@ -30,17 +32,21 @@ for search_path in folder_paths.get_folder_paths("diffusers"):
                 paths.append(os.path.relpath(root, start=search_path))
             if "config.json" in files:
                 paths_a.append(os.path.relpath(root, start=search_path))
-                paths_a = [z for z in paths_a if "controlnet-canny-sdxl-1.0" in z]
+                paths_a = [z for z in paths_a if "controlnet-canny-sdxl-1.0" in z] + [p for p in paths_a if
+                                                                                      "MistoLine" in p] + [o for o in
+                                                                                                           paths_a if
+                                                                                                           "lcm-sdxl" in o]
 
-if paths!=[] or paths_a!=[]:
+if paths != [] or paths_a != []:
     paths = [] + [x for x in paths if x] + [y for y in paths_a if y]
 else:
-    paths = ["no model in default diffusers directory",]
+    paths = ["no model in default diffusers directory", ]
 
 scheduler_list = [
     "Euler",
     "Euler a",
     "DDIM",
+    "DDPM",
     "DPM++ 2M",
     "DPM++ 2M Karras",
     "DPM++ 2M SDE",
@@ -51,13 +57,21 @@ scheduler_list = [
     "DPM2 Karras",
     "DPM2 a",
     "DPM2 a Karras",
-    "DPM++ 3M SDE",
-    "DPM++ 3M SDE",
     "Heun",
+    "LCM",
     "LMS",
     "LMS Karras",
     "UniPC",
-    "UniPC_Bh2"
+    "UniPC_Bh2",
+    "TCD"
+]
+
+sdxl_lightning_list = [
+    "sdxl_lightning_1step_unet_x0.safetensors",
+    "sdxl_lightning_2step_unet.safetensors",
+    "sdxl_lightning_4step_unet.safetensors",
+    "sdxl_lightning_8step_unet.safetensors"
+    "Hyper-SDXL-1step-Unet.safetensors",
 ]
 
 
@@ -69,6 +83,8 @@ def get_sheduler(name):
         scheduler = EulerAncestralDiscreteScheduler()
     elif name == "DDIM":
         scheduler = DDIMScheduler()
+    elif name == "DDPM":
+        scheduler = DDPMScheduler()
     elif name == "DPM++ 2M":
         scheduler = DPMSolverMultistepScheduler()
     elif name == "DPM++ 2M Karras":
@@ -91,14 +107,18 @@ def get_sheduler(name):
         scheduler = KDPM2AncestralDiscreteScheduler(use_karras_sigmas=True)
     elif name == "Heun":
         scheduler = HeunDiscreteScheduler()
+    elif name == "LCD":
+        scheduler = LCMScheduler()
     elif name == "LMS":
         scheduler = LMSDiscreteScheduler()
     elif name == "LMS Karras":
         scheduler = LMSDiscreteScheduler(use_karras_sigmas=True)
-    elif name == "UniPC":
-        scheduler = UniPCMultistepScheduler()
+    elif name == "UniPC_Bh1":
+        scheduler = UniPCMultistepScheduler(solver_type="bh1")
     elif name == "UniPC_Bh2":
         scheduler = UniPCMultistepScheduler(solver_type="bh2")
+    elif name == "TCD":
+        scheduler = TCDScheduler()
     return scheduler
 
 
@@ -128,6 +148,7 @@ class Hidiffusion_Text2Image:
                 "model_local_path": (paths,),
                 "repo_id": ("STRING", {"default": "stabilityai/stable-diffusion-xl-base-1.0"}),
                 "scheduler": (scheduler_list,),
+                "sdxl_lightning_model": ([] + folder_paths.get_filename_list("unet"),),
                 "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
                 "steps": ("INT", {"default": 50, "min": 1, "max": 10000}),
                 "cfg": ("FLOAT", {"default": 7.5, "min": 0.0, "max": 100.0, "step": 0.1, "round": 0.01}),
@@ -142,21 +163,51 @@ class Hidiffusion_Text2Image:
     FUNCTION = "text2image"
     CATEGORY = "Hidiffusion_Pro"
 
-    def text2image(self, prompt, negative_prompt, model_local_path, repo_id, scheduler, seed, steps, cfg, eta, height,
+    def text2image(self, prompt, negative_prompt, model_local_path, repo_id, scheduler, sdxl_lightning_model, seed,
+                   steps, cfg, eta, height,
                    width):
-        if model_local_path == ["no model in default diffusers directory",] and repo_id == "":
+        if model_local_path == ["no model in default diffusers directory", ] and repo_id == "":
             raise "you need fill repo_id or download model in diffusers dir "
 
         model_path = get_local_path(file_path, model_local_path)
         if repo_id == "":
             repo_id = model_path
         model_type = repo_id.split("/")[-1]
+        model_type_lcm = model_path.split("/")[-1]
         scheduler_used = get_sheduler(scheduler)
         model_list = ["stable-diffusion-2-1-base", "stable-diffusion-v1-5", "Ghibli-Diffusion"]
         if model_type == "stable-diffusion-xl-base-1.0":
-            scheduler = scheduler_used.from_pretrained(repo_id, subfolder="scheduler")
-            pipe = StableDiffusionXLPipeline.from_pretrained(repo_id, scheduler=scheduler,
-                                                             torch_dtype=torch.float16, variant="fp16").to("cuda")
+            if sdxl_lightning_model in sdxl_lightning_list:
+                base = "stabilityai/stable-diffusion-xl-base-1.0"
+                # repo = "ByteDance/SDXL-Lightning"
+                # ckpt = "sdxl_lightning_4step_unet.safetensors"  # Use the correct ckpt for your step setting!
+                light_path = os.path.join(file_path, "models", "unet", sdxl_lightning_model)
+                light_model_path = os.path.normpath(light_path)
+                if sys.platform.startswith('win32'):
+                    light_model_path = light_model_path.replace('\\', "/")
+                ckpt = light_model_path
+                # print(ckpt)
+                # Load model.
+                unet = UNet2DConditionModel.from_config(base, subfolder="unet").to("cuda", torch.float16)
+                unet.load_state_dict(load_file(ckpt, device="cuda"))
+
+                pipe = StableDiffusionXLPipeline.from_pretrained(base, unet=unet, torch_dtype=torch.float16,
+                                                                 variant="fp16").to("cuda")
+                # Ensure sampler uses "trailing" timesteps.
+                pipe.scheduler = scheduler_used.from_config(pipe.scheduler.config, timestep_spacing="trailing")
+            elif model_type_lcm == "lcm-sdxl":
+                base = "stabilityai/stable-diffusion-xl-base-1.0"
+                # print(model_path)
+                unet = UNet2DConditionModel.from_pretrained(model_path, state_dict=False, torch_dtype=torch.float16,
+                                                            variant="fp16")
+                pipe = DiffusionPipeline.from_pretrained(base, unet=unet,
+                                                         torch_dtype=torch.float16, variant="fp16")
+                pipe.scheduler = LCMScheduler.from_config(pipe.scheduler.config)
+                pipe.to("cuda")
+            else:
+                scheduler = scheduler_used.from_pretrained(repo_id, subfolder="scheduler")
+                pipe = StableDiffusionXLPipeline.from_pretrained(repo_id, scheduler=scheduler,
+                                                                 torch_dtype=torch.float16, variant="fp16").to("cuda")
         elif model_type == "sdxl-turbo":
             pipe = AutoPipelineForText2Image.from_pretrained(repo_id, torch_dtype=torch.float16,
                                                              variant="fp16").to('cuda')
@@ -193,7 +244,6 @@ class Hidiffusion_Text2Image:
 
 
 class Hidiffusion_Controlnet_Image:
-
     def __init__(self):
         pass
 
@@ -232,6 +282,7 @@ class Hidiffusion_Controlnet_Image:
                 "model_local_path": (paths,),
                 "repo_id": ("STRING", {"default": "stabilityai/stable-diffusion-xl-base-1.0"}),
                 "scheduler": (scheduler_list,),
+                "sdxl_lightning_model": ([] + folder_paths.get_filename_list("unet"),),
                 "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
                 "steps": ("INT", {"default": 20, "min": 1, "max": 10000}),
                 "controlnet_local_path": (paths,),
@@ -259,13 +310,14 @@ class Hidiffusion_Controlnet_Image:
     CATEGORY = "Hidiffusion_Pro"
 
     def controlnet_image(self, image, prompt, negative_prompt, model_local_path, repo_id, scheduler,
+                         sdxl_lightning_model,
                          controlnet_local_path, controlnet_repo_id, seed, steps, cfg,
                          eta, canny_minval, canny_maxval, controlnet_type,
                          controlnet_conditioning_scale, controlnet_strength, height, width,
                          mask_image):
 
         scheduler_used = get_sheduler(scheduler)
-        if model_local_path == ["no model in default diffusers directory",] and repo_id == "":
+        if model_local_path == ["no model in default diffusers directory", ] and repo_id == "":
             raise "you need fill repo_id or download model in diffusers dir "
         model_path = get_local_path(file_path, model_local_path)
         controlnet_local_path = get_local_path(file_path, controlnet_local_path)
@@ -273,20 +325,35 @@ class Hidiffusion_Controlnet_Image:
             repo_id = model_path
         if controlnet_repo_id == "":
             controlnet_repo_id = controlnet_local_path
-
         # print(model_path,controlnet_local_path)
-
         ori_image = self.tensor_to_image(image)
         mask = self.tensor_to_image(mask_image)
-        scheduler = scheduler_used.from_pretrained(repo_id, subfolder="scheduler")
         model_type = controlnet_repo_id.split("/")[-1]
-
+        controlnet_suport = ["controlnet-canny-sdxl-1.0", "MistoLine"]
         if model_type == "stable-diffusion-xl-1.0-inpainting-0.1":
-            pipe = AutoPipelineForInpainting.from_pretrained(
-                controlnet_repo_id, torch_dtype=torch.float16, variant="fp16",
-                scheduler=scheduler
-            )
-
+            if sdxl_lightning_model in sdxl_lightning_list:
+                base = "stabilityai/stable-diffusion-xl-base-1.0"
+                # repo = "ByteDance/SDXL-Lightning"
+                # ckpt = "sdxl_lightning_4step_unet.safetensors"  # Use the correct ckpt for your step setting!
+                light_path = os.path.join(file_path, "models", "unet", sdxl_lightning_model)
+                light_model_path = os.path.normpath(light_path)
+                if sys.platform.startswith('win32'):
+                    light_model_path = light_model_path.replace('\\', "/")
+                ckpt = light_model_path
+                # print(ckpt)
+                # Load model.
+                unet = UNet2DConditionModel.from_config(base, subfolder="unet").to("cuda", torch.float16)
+                unet.load_state_dict(load_file(ckpt, device="cuda"))
+                pipe = StableDiffusionXLPipeline.from_pretrained(base, unet=unet, torch_dtype=torch.float16,
+                                                                 variant="fp16").to("cuda")
+                # Ensure sampler uses "trailing" timesteps.
+                pipe.scheduler = scheduler_used.from_config(pipe.scheduler.config, timestep_spacing="trailing")
+            else:
+                scheduler = scheduler_used.from_pretrained(repo_id, subfolder="scheduler")
+                pipe = AutoPipelineForInpainting.from_pretrained(
+                    controlnet_repo_id, torch_dtype=torch.float16, variant="fp16",
+                    scheduler=scheduler
+                )
             apply_hidiffusion(pipe)
             pipe.enable_xformers_memory_efficient_attention()
             pipe.enable_model_cpu_offload()
@@ -295,17 +362,36 @@ class Hidiffusion_Controlnet_Image:
             output_img = pipe(prompt=prompt, image=ori_image, mask_image=mask, height=height, width=width,
                               strength=controlnet_strength, num_inference_steps=steps, seed=seed,
                               guidance_scale=cfg, negative_prompt=negative_prompt, eta=eta).images[0]
-        elif model_type == "controlnet-canny-sdxl-1.0":
+        elif model_type in controlnet_suport:
             controlnet = ControlNetModel.from_pretrained(controlnet_repo_id, torch_dtype=torch.float16,
                                                          variant="fp16").to(
                 "cuda")
             if controlnet_type == "img2img":
                 # get canny image
                 canny_image = self.get_canny_image(ori_image, canny_minval, canny_maxval)
-                pipe = StableDiffusionXLControlNetImg2ImgPipeline.from_pretrained(repo_id, controlnet=controlnet,
-                                                                                  scheduler=scheduler,
-                                                                                  torch_dtype=torch.float16, ).to(
-                    "cuda")
+                if sdxl_lightning_model in sdxl_lightning_list:
+                    base = "stabilityai/stable-diffusion-xl-base-1.0"
+                    # repo = "ByteDance/SDXL-Lightning"
+                    # ckpt = "sdxl_lightning_4step_unet.safetensors"  # Use the correct ckpt for your step setting!
+                    light_path = os.path.join(file_path, "models", "unet", sdxl_lightning_model)
+                    light_model_path = os.path.normpath(light_path)
+                    if sys.platform.startswith('win32'):
+                        light_model_path = light_model_path.replace('\\', "/")
+                    ckpt = light_model_path
+                    # print(ckpt)
+                    # Load model.
+                    unet = UNet2DConditionModel.from_config(base, subfolder="unet").to("cuda", torch.float16)
+                    unet.load_state_dict(load_file(ckpt, device="cuda"))
+                    pipe = StableDiffusionXLPipeline.from_pretrained(base, unet=unet, torch_dtype=torch.float16,
+                                                                     variant="fp16").to("cuda")
+                    # Ensure sampler uses "trailing" timesteps.
+                    pipe.scheduler = scheduler_used.from_config(pipe.scheduler.config, timestep_spacing="trailing")
+                else:
+                    scheduler = scheduler_used.from_pretrained(repo_id, subfolder="scheduler")
+                    pipe = StableDiffusionXLControlNetImg2ImgPipeline.from_pretrained(repo_id, controlnet=controlnet,
+                                                                                      scheduler=scheduler,
+                                                                                      torch_dtype=torch.float16, ).to(
+                        "cuda")
                 apply_hidiffusion(pipe)
                 pipe.enable_xformers_memory_efficient_attention()
                 pipe.enable_model_cpu_offload()
@@ -324,14 +410,31 @@ class Hidiffusion_Controlnet_Image:
                                   negative_prompt=negative_prompt,
                                   eta=eta
                                   ).images[0]
-
-            elif controlnet_type == "text2img":
+            else:
                 canny_image = self.get_canny_image(ori_image, canny_minval, canny_maxval)
-                pipe = StableDiffusionXLControlNetPipeline.from_pretrained(
-                    repo_id, controlnet=controlnet, torch_dtype=torch.float16,
-                    scheduler=scheduler
-                )
-
+                if sdxl_lightning_model in sdxl_lightning_list:
+                    base = "stabilityai/stable-diffusion-xl-base-1.0"
+                    # repo = "ByteDance/SDXL-Lightning"
+                    # ckpt = "sdxl_lightning_4step_unet.safetensors"  # Use the correct ckpt for your step setting!
+                    light_path = os.path.join(file_path, "models", "unet", sdxl_lightning_model)
+                    light_model_path = os.path.normpath(light_path)
+                    if sys.platform.startswith('win32'):
+                        light_model_path = light_model_path.replace('\\', "/")
+                    ckpt = light_model_path
+                    # print(ckpt)
+                    # Load model.
+                    unet = UNet2DConditionModel.from_config(base, subfolder="unet").to("cuda", torch.float16)
+                    unet.load_state_dict(load_file(ckpt, device="cuda"))
+                    pipe = StableDiffusionXLPipeline.from_pretrained(base, unet=unet, torch_dtype=torch.float16,
+                                                                     variant="fp16").to("cuda")
+                    # Ensure sampler uses "trailing" timesteps.
+                    pipe.scheduler = scheduler_used.from_config(pipe.scheduler.config, timestep_spacing="trailing")
+                else:
+                    scheduler = scheduler_used.from_pretrained(repo_id, subfolder="scheduler")
+                    pipe = StableDiffusionXLControlNetPipeline.from_pretrained(
+                        repo_id, controlnet=controlnet, torch_dtype=torch.float16,
+                        scheduler=scheduler
+                    )
                 apply_hidiffusion(pipe)
                 pipe.enable_xformers_memory_efficient_attention()
                 pipe.enable_model_cpu_offload()
@@ -343,8 +446,6 @@ class Hidiffusion_Controlnet_Image:
                     height=height, width=width, guidance_scale=cfg, negative_prompt=negative_prompt,
                     num_inference_steps=steps, eta=eta
                 ).images[0]
-            else:
-                raise "Unsupported model"
         else:
             raise "Unsupported model_path or repo_id"
 
