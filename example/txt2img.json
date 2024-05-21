@@ -1,0 +1,174 @@
+{
+  "last_node_id": 62,
+  "last_link_id": 85,
+  "nodes": [
+    {
+      "id": 28,
+      "type": "Note",
+      "pos": [
+        768,
+        153
+      ],
+      "size": {
+        "0": 568.2068481445312,
+        "1": 1102.5286865234375
+      },
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "properties": {
+        "text": ""
+      },
+      "widgets_values": [
+        "stabilityai/stable-diffusion-xl-base-1.0\nprompt = Standing tall amidst the ruins, a stone golem awakens, vines and flowers sprouting from the crevices in its body.\n\nnegative_prompt = blurry, ugly, duplicate, poorly drawn face, deformed, mosaic, artifacts, bad limbs\n\nguidance_scale=7.5,\nheight=2048, \nwidth=2048,\neta=1.0\nsteps=50\n\nstabilityai/sdxl-turbo\nprompt = In the depths of a mystical forest, a robotic owl with night vision lenses for eyes watches over the nocturnal creatures.\n\nsteps=4,\nheight=1024, \nwidth=1024, \nguidance_scale=0.0\n\nstabilityai/stable-diffusion-2-1-base\nprompt = An adorable happy brown border collie sitting on a bed, high detail.\n\nnegative_prompt = ugly, tiling, out of frame, poorly drawn face, extra limbs, disfigured, deformed, body out of frame, blurry, bad anatomy, blurred, artifacts, bad proportions.\n\nguidance_scale=7.5, height=1024,\nwidth=1024, \neta=1.0, \n\nrunwayml/stable-diffusion-v1-5\nprompt = thick strokes, bright colors, an exotic fox, cute, chibi kawaii. detailed fur, hyperdetailed , big reflective eyes, fairytale, artstation,centered composition, perfect composition, centered, vibrant colors, muted colors, high detailed, 8k.\n\nnegative_prompt = ugly, tiling, poorly drawn face, out of frame, disfigured, deformed, blurry, bad anatomy, blurred.\n\nguidance_scale=7.5,\nheight=1024,\nwidth=1024, \neta=1.0, \n\ndiffusers/controlnet-canny-sdxl-1.0\ntext2img\nprompt = The Joker, high face detail, high detail, muted color, 8k\n\nnegative_prompt = blurry, ugly, duplicate, poorly drawn, deformed, mosaic.\ncontrolnet_conditioning_scale = 0.5\nheight=2048,\nwidth=2048, \nguidance_scale=7.5,\neta=1.0\n\ndiffusers/controlnet-canny-sdxl-1.0\nimg2img\nprompt = Lara Croft with brown hair, and is wearing a tank top, a brown backpack. The room is dark and has an old-fashioned decor with a patterned floor and a wall featuring a design with arches and a dark area on the right side, muted color, high detail, 8k high definition award winning\n\nnegative_prompt = underexposed, poorly drawn hands, duplicate hands, overexposed, bad art, beginner, amateur, abstract, disfigured, deformed, close up, weird colors, watermark\n\ncontrolnet_conditioning_scale = 0.5\nheight=1536,\nwidth=2048,\nstrength=0.99,\nsteps=50,\nguidance_scale=12.5,\neta=1.0\n\ndiffusers/stable-diffusion-xl-1.0-inpainting-0.1\nprompt =  A steampunk explorer in a leather aviator cap and goggles, with a brass telescope in hand, stands amidst towering ancient trees, their roots entwined with intricate gears and pipes.\n\nnegative_prompt = blurry, ugly, duplicate, poorly drawn, deformed, mosaic\n\n\nheight=2048,\nwidth=2048,\nstrength=0.85, \nguidance_scale=12.5,\n eta=1.0\n\n\nsdxl_lightning_list = [\n    \"sdxl_lightning_1step_unet_x0.safetensors\",\n    \"sdxl_lightning_2step_unet.safetensors\",\n    \"sdxl_lightning_4step_unet.safetensors\",\n    \"sdxl_lightning_8step_unet.safetensors\"\n    \"Hyper-SDXL-1step-Unet.safetensors\",\n    \"lcm-sdxl-base-1.0.safetensors\"\n]\n\n\nopenpose XL xinsir/controlnet-openpose-sdxl-1.0\n\n"
+      ],
+      "color": "#432",
+      "bgcolor": "#653"
+    },
+    {
+      "id": 60,
+      "type": "SaveImage",
+      "pos": [
+        2598.328397477778,
+        768.9569483895934
+      ],
+      "size": {
+        "0": 315,
+        "1": 58
+      },
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 85,
+          "label": "图像"
+        }
+      ],
+      "properties": {},
+      "widgets_values": [
+        "ComfyUI"
+      ]
+    },
+    {
+      "id": 62,
+      "type": "Hi_Text2Img",
+      "pos": [
+        2148.887777643067,
+        781.8941467367006
+      ],
+      "size": [
+        400,
+        322
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "repo_id",
+          "type": "STRING",
+          "link": 84,
+          "widget": {
+            "name": "repo_id"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "name": "output_image",
+          "type": "IMAGE",
+          "links": [
+            85
+          ],
+          "shape": 3,
+          "label": "output_image",
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "Hi_Text2Img"
+      },
+      "widgets_values": [
+        "Standing tall amidst the ruins, a stone golem awakens, vines and flowers sprouting from the crevices in its body",
+        "blurry, ugly, duplicate, poorly drawn face, deformed, mosaic, artifacts, bad limbs",
+        "",
+        "Euler",
+        "SDXS 0.9 diffusion_pytorch_model .safetensors",
+        0,
+        "randomize",
+        50,
+        7.5,
+        1,
+        2048,
+        2048
+      ]
+    },
+    {
+      "id": 61,
+      "type": "Diffusers_Or_Repo_Choice",
+      "pos": [
+        1749,
+        738
+      ],
+      "size": {
+        "0": 315,
+        "1": 82
+      },
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "repo_id",
+          "type": "STRING",
+          "links": [
+            84
+          ],
+          "shape": 3,
+          "label": "repo_id",
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "Diffusers_Or_Repo_Choice"
+      },
+      "widgets_values": [
+        "Marigold",
+        "stabilityai/stable-diffusion-xl-base-1.0"
+      ]
+    }
+  ],
+  "links": [
+    [
+      84,
+      61,
+      0,
+      62,
+      0,
+      "STRING"
+    ],
+    [
+      85,
+      62,
+      0,
+      60,
+      0,
+      "IMAGE"
+    ]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 1.1000000000000005,
+      "offset": [
+        -1306.4391744055838,
+        -255.53033961970067
+      ]
+    }
+  },
+  "version": 0.4
+}
