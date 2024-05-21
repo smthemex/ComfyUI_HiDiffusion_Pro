@@ -1,0 +1,516 @@
+{
+  "last_node_id": 54,
+  "last_link_id": 73,
+  "nodes": [
+    {
+      "id": 42,
+      "type": "LoadImage",
+      "pos": [
+        1388,
+        684
+      ],
+      "size": {
+        "0": 315,
+        "1": 314
+      },
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            67,
+            68
+          ],
+          "shape": 3,
+          "label": "图像",
+          "slot_index": 0
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null,
+          "shape": 3,
+          "label": "遮罩",
+          "slot_index": 1
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "lara.jpeg",
+        "image"
+      ]
+    },
+    {
+      "id": 43,
+      "type": "Diffusers_Or_Repo_Choice",
+      "pos": [
+        1402.67490234375,
+        1166.5250732421878
+      ],
+      "size": {
+        "0": 315,
+        "1": 82
+      },
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "repo_id",
+          "type": "STRING",
+          "links": [
+            65
+          ],
+          "shape": 3,
+          "label": "repo_id",
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "Diffusers_Or_Repo_Choice"
+      },
+      "widgets_values": [
+        "xinsir\\controlnet-openpose-sdxl-1.0",
+        ""
+      ]
+    },
+    {
+      "id": 54,
+      "type": "Diffusers_Or_Repo_Choice",
+      "pos": [
+        1401,
+        1046
+      ],
+      "size": {
+        "0": 315,
+        "1": 82
+      },
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "repo_id",
+          "type": "STRING",
+          "links": [
+            73
+          ],
+          "shape": 3,
+          "label": "repo_id",
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "Diffusers_Or_Repo_Choice"
+      },
+      "widgets_values": [
+        "diffusers\\stable-diffusion-xl-1.0-inpainting-0.1",
+        "stabilityai/stable-diffusion-xl-base-1.0"
+      ]
+    },
+    {
+      "id": 51,
+      "type": "PreviewImage",
+      "pos": [
+        1848,
+        380
+      ],
+      "size": [
+        334.02356190653336,
+        246
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 61,
+          "label": "图像"
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "PreviewImage"
+      }
+    },
+    {
+      "id": 49,
+      "type": "OpenposePreprocessor",
+      "pos": [
+        1456,
+        462
+      ],
+      "size": {
+        "0": 315,
+        "1": 150
+      },
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 72,
+          "label": "图像",
+          "slot_index": 0
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            61,
+            69
+          ],
+          "shape": 3,
+          "label": "图像",
+          "slot_index": 0
+        },
+        {
+          "name": "POSE_KEYPOINT",
+          "type": "POSE_KEYPOINT",
+          "links": null,
+          "shape": 3,
+          "label": "姿态关键点"
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "OpenposePreprocessor"
+      },
+      "widgets_values": [
+        "enable",
+        "enable",
+        "enable",
+        512
+      ]
+    },
+    {
+      "id": 52,
+      "type": "Hi_Control2Img",
+      "pos": [
+        1795,
+        672
+      ],
+      "size": {
+        "0": 378.0284118652344,
+        "1": 585.3239135742188
+      },
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 67,
+          "label": "image"
+        },
+        {
+          "name": "control_image",
+          "type": "IMAGE",
+          "link": 68,
+          "label": "control_image"
+        },
+        {
+          "name": "mask_image",
+          "type": "IMAGE",
+          "link": 69,
+          "label": "mask_image"
+        },
+        {
+          "name": "repo_id",
+          "type": "STRING",
+          "link": 73,
+          "widget": {
+            "name": "repo_id"
+          },
+          "label": "repo_id"
+        },
+        {
+          "name": "controlnet_repo_id",
+          "type": "STRING",
+          "link": 65,
+          "widget": {
+            "name": "controlnet_repo_id"
+          },
+          "label": "controlnet_repo_id"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "output_image",
+          "type": "IMAGE",
+          "links": [
+            70
+          ],
+          "shape": 3,
+          "label": "output_image",
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "Hi_Control2Img"
+      },
+      "widgets_values": [
+        "",
+        "",
+        "Lara Croft with brown hair, and is wearing a tank top, a brown backpack.The room is dark and has an old-fashioned decor with a patterned floor and a wallfeaturing a design with arches and a dark area on the right side, muted color, high detail, 8k high definition award winning",
+        "underexposed, poorly drawn hands, duplicate hands, overexposed,bad art, beginner, amateur, abstract, disfigured, deformed, close up, weird colors, watermark",
+        "Euler a",
+        "diffusion_pytorch_model.safetensors",
+        630581415713046,
+        "randomize",
+        20,
+        7,
+        1,
+        "text2img",
+        0.5,
+        0.99,
+        1536,
+        2048
+      ]
+    },
+    {
+      "id": 50,
+      "type": "LoadImage",
+      "pos": [
+        2212,
+        325
+      ],
+      "size": {
+        "0": 315,
+        "1": 314
+      },
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            71
+          ],
+          "shape": 3,
+          "label": "图像",
+          "slot_index": 0
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null,
+          "shape": 3,
+          "label": "遮罩"
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "jhk-1706277214840.jpg",
+        "image"
+      ]
+    },
+    {
+      "id": 53,
+      "type": "ImageScale",
+      "pos": [
+        2300,
+        686
+      ],
+      "size": {
+        "0": 315,
+        "1": 130
+      },
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 71,
+          "label": "图像"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            72
+          ],
+          "shape": 3,
+          "label": "图像",
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "ImageScale"
+      },
+      "widgets_values": [
+        "nearest-exact",
+        2048,
+        1536,
+        "center"
+      ]
+    },
+    {
+      "id": 28,
+      "type": "Note",
+      "pos": [
+        768,
+        153
+      ],
+      "size": {
+        "0": 568.2068481445312,
+        "1": 1102.5286865234375
+      },
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "properties": {
+        "text": ""
+      },
+      "widgets_values": [
+        "stabilityai/stable-diffusion-xl-base-1.0\nprompt = Standing tall amidst the ruins, a stone golem awakens, vines and flowers sprouting from the crevices in its body.\n\nnegative_prompt = blurry, ugly, duplicate, poorly drawn face, deformed, mosaic, artifacts, bad limbs\n\nguidance_scale=7.5,\nheight=2048, \nwidth=2048,\neta=1.0\nsteps=50\n\nstabilityai/sdxl-turbo\nprompt = In the depths of a mystical forest, a robotic owl with night vision lenses for eyes watches over the nocturnal creatures.\n\nsteps=4,\nheight=1024, \nwidth=1024, \nguidance_scale=0.0\n\nstabilityai/stable-diffusion-2-1-base\nprompt = An adorable happy brown border collie sitting on a bed, high detail.\n\nnegative_prompt = ugly, tiling, out of frame, poorly drawn face, extra limbs, disfigured, deformed, body out of frame, blurry, bad anatomy, blurred, artifacts, bad proportions.\n\nguidance_scale=7.5, height=1024,\nwidth=1024, \neta=1.0, \n\nrunwayml/stable-diffusion-v1-5\nprompt = thick strokes, bright colors, an exotic fox, cute, chibi kawaii. detailed fur, hyperdetailed , big reflective eyes, fairytale, artstation,centered composition, perfect composition, centered, vibrant colors, muted colors, high detailed, 8k.\n\nnegative_prompt = ugly, tiling, poorly drawn face, out of frame, disfigured, deformed, blurry, bad anatomy, blurred.\n\nguidance_scale=7.5,\nheight=1024,\nwidth=1024, \neta=1.0, \n\ndiffusers/controlnet-canny-sdxl-1.0\ntext2img\nprompt = The Joker, high face detail, high detail, muted color, 8k\n\nnegative_prompt = blurry, ugly, duplicate, poorly drawn, deformed, mosaic.\ncontrolnet_conditioning_scale = 0.5\nheight=2048,\nwidth=2048, \nguidance_scale=7.5,\neta=1.0\n\ndiffusers/controlnet-canny-sdxl-1.0\nimg2img\nprompt = Lara Croft with brown hair, and is wearing a tank top, a brown backpack. The room is dark and has an old-fashioned decor with a patterned floor and a wall featuring a design with arches and a dark area on the right side, muted color, high detail, 8k high definition award winning\n\nnegative_prompt = underexposed, poorly drawn hands, duplicate hands, overexposed, bad art, beginner, amateur, abstract, disfigured, deformed, close up, weird colors, watermark\n\ncontrolnet_conditioning_scale = 0.5\nheight=1536,\nwidth=2048,\nstrength=0.99,\nsteps=50,\nguidance_scale=12.5,\neta=1.0\n\ndiffusers/stable-diffusion-xl-1.0-inpainting-0.1\nprompt =  A steampunk explorer in a leather aviator cap and goggles, with a brass telescope in hand, stands amidst towering ancient trees, their roots entwined with intricate gears and pipes.\n\nnegative_prompt = blurry, ugly, duplicate, poorly drawn, deformed, mosaic\n\n\nheight=2048,\nwidth=2048,\nstrength=0.85, \nguidance_scale=12.5,\n eta=1.0\n\n\nsdxl_lightning_list = [\n    \"sdxl_lightning_1step_unet_x0.safetensors\",\n    \"sdxl_lightning_2step_unet.safetensors\",\n    \"sdxl_lightning_4step_unet.safetensors\",\n    \"sdxl_lightning_8step_unet.safetensors\"\n    \"Hyper-SDXL-1step-Unet.safetensors\",\n    \"lcm-sdxl-base-1.0.safetensors\"\n]\n\n\nopenpose XL xinsir/controlnet-openpose-sdxl-1.0\n\n"
+      ],
+      "color": "#432",
+      "bgcolor": "#653"
+    },
+    {
+      "id": 35,
+      "type": "SaveImage",
+      "pos": [
+        2276,
+        860
+      ],
+      "size": {
+        "0": 342.4668273925781,
+        "1": 371.18951416015625
+      },
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 70,
+          "label": "图像"
+        }
+      ],
+      "properties": {},
+      "widgets_values": [
+        "ComfyUI"
+      ]
+    }
+  ],
+  "links": [
+    [
+      61,
+      49,
+      0,
+      51,
+      0,
+      "IMAGE"
+    ],
+    [
+      65,
+      43,
+      0,
+      52,
+      4,
+      "STRING"
+    ],
+    [
+      67,
+      42,
+      0,
+      52,
+      0,
+      "IMAGE"
+    ],
+    [
+      68,
+      42,
+      0,
+      52,
+      1,
+      "IMAGE"
+    ],
+    [
+      69,
+      49,
+      0,
+      52,
+      2,
+      "IMAGE"
+    ],
+    [
+      70,
+      52,
+      0,
+      35,
+      0,
+      "IMAGE"
+    ],
+    [
+      71,
+      50,
+      0,
+      53,
+      0,
+      "IMAGE"
+    ],
+    [
+      72,
+      53,
+      0,
+      49,
+      0,
+      "IMAGE"
+    ],
+    [
+      73,
+      54,
+      0,
+      52,
+      3,
+      "STRING"
+    ]
+  ],
+  "groups": [
+    {
+      "title": "Group",
+      "bounding": [
+        1370,
+        635,
+        1374,
+        630
+      ],
+      "color": "#3f789e",
+      "font_size": 24,
+      "locked": false
+    }
+  ],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.9090909090909091,
+      "offset": [
+        -855.3767321885216,
+        -206.54977295758715
+      ]
+    }
+  },
+  "version": 0.4
+}
