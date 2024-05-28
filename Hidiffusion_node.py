@@ -17,7 +17,7 @@ from diffusers import (StableDiffusionXLPipeline, DiffusionPipeline, DDIMSchedul
 from .hidiffusion.hidiffusion import apply_hidiffusion
 import folder_paths
 from safetensors.torch import load_file
-
+import yaml
 
 dir_path = os.path.dirname(os.path.abspath(__file__))
 path_dir = os.path.dirname(dir_path)
@@ -66,18 +66,13 @@ scheduler_list = [
     "TCD"
 ]
 
-sdxl_lightning_list = [
-    "sdxl_lightning_1step_unet_x0.safetensors",
-    "sdxl_lightning_2step_unet.safetensors",
-    "sdxl_lightning_4step_unet.safetensors",
-    "sdxl_lightning_8step_unet.safetensors"
-    "Hyper-SDXL-1step-Unet.safetensors",
-    "lcm-sdxl-base-1.0.safetensors",
-]
+fs = open(os.path.join(dir_path,"model.yaml"),encoding="UTF-8")
+datas = yaml.load(fs,Loader=yaml.FullLoader)  #添加后就不警告了
 
-normal_model_list = ["stable-diffusion-2-1-base", "stable-diffusion-v1-5", "playground-v2.5-1024px-aesthetic",
-                     "Ghibli-Diffusion", "playground-v2-1024px-aesthetic"]
-
+normal_model_list = datas["surport_model"]
+sdxl_lightning_list =datas["lightning_unet"]
+controlnet_suport = datas["surport_controlnet"]
+xl_model_support =datas["sdxl_model"]
 
 def get_sheduler(name):
     scheduler = False
@@ -194,7 +189,7 @@ class Hi_Text2Img:
                                                           "mosaic, artifacts, bad limbs"}),
                 "repo_id": ("STRING", {"forceInput": True}),
                 "scheduler": (scheduler_list,),
-                "unet_model": ([] + folder_paths.get_filename_list("unet"),),
+                "unet_model": (["none"] + folder_paths.get_filename_list("unet"),),
                 "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
                 "steps": ("INT", {"default": 50, "min": 1, "max": 10000}),
                 "cfg": ("FLOAT", {"default": 7.5, "min": 0.0, "max": 100.0, "step": 0.1, "round": 0.01}),
@@ -213,7 +208,7 @@ class Hi_Text2Img:
                    steps, cfg, eta, height, width):
         model_type = repo_id.rsplit("/")[-1]
         scheduler_used = get_sheduler(scheduler)
-        if model_type == "stable-diffusion-xl-base-1.0":
+        if model_type in xl_model_support:
             if unet_model in sdxl_lightning_list:
                 light_path = os.path.join(file_path, "models", "unet", unet_model)
                 ckpt = get_instance_path(light_path)
@@ -435,7 +430,7 @@ class Hi_Control2Img:
                                                           "deformed, close up, weird colors, watermark"}),
 
                 "scheduler": (scheduler_list,),
-                "unet_model": ([] + folder_paths.get_filename_list("unet"),),
+                "unet_model": (["none"] + folder_paths.get_filename_list("unet"),),
                 "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
                 "steps": ("INT", {"default": 20, "min": 1, "max": 10000}),
                 "cfg": ("FLOAT", {"default": 12.5, "min": 0.0, "max": 100.0, "step": 0.1, "round": 0.01}),
@@ -471,7 +466,7 @@ class Hi_Control2Img:
         mask_image = tensor_to_image(mask_image)
         model_type = repo_id.rsplit("/")[-1]
         control_model_type = controlnet_repo_id.rsplit("/")[-1]
-        controlnet_suport = ["controlnet-canny-sdxl-1.0", "MistoLine"]
+
 
         if control_model_type == "stable-diffusion-xl-1.0-inpainting-0.1":
             output_img = self.inpainting_gener(image, repo_id, controlnet_repo_id, prompt, negative_prompt, scheduler,
