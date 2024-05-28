@@ -36,7 +36,7 @@ HiDiffusion  From: [link](https://github.com/megvii-research/HiDiffusion)
   
 2.requirements  
 ----
-need diffusers >=0.27.0
+need diffusers >=0.27.0  
 yaml
 
 
