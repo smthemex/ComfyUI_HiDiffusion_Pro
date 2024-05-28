@@ -1,0 +1,20 @@
+lightning_unet:
+      - sdxl_lightning_1step_unet_x0.safetensors     #repo    ByteDance/SDXL-Lightning
+      - sdxl_lightning_2step_unet.safetensors        #repo    ByteDance/SDXL-Lightning
+      - sdxl_lightning_4step_unet.safetensors
+      - sdxl_lightning_8step_unet.safetensors        
+      - Hyper-SDXL-1step-Unet.safetensors            #repo    ByteDance/Hyper-SD
+      - lcm-sdxl-base-1.0.safetensors                #repo    ckpt/lcm-sdxl-unet    you can change model name like example
+surport_model:                                                        
+      - stable-diffusion-v1-5                        #repo    runwayml/stable-diffusion-v1-5
+      - stable-diffusion-2-1-base                    #repo    stabilityai/stable-diffusion-2-1-base
+      - playground-v2.5-1024px-aesthetic             #repo    playgroundai/playground-v2.5-1024px-aesthetic
+      - playground-v2-1024px-aesthetic               #repo    playgroundai/playground-v2-1024px-aesthetic
+      - Ghibli-Diffusion                             #repo    nitrosocke/Ghibli-Diffusion
+surport_controlnet:
+      - controlnet-canny-sdxl-1.0                    #repo   diffusers/controlnet-canny-sdxl-1.0
+      - MistoLine                                    #repo   TheMistoAI/MistoLine
+sdxl_model:
+      - stable-diffusion-xl-base-1.0                 #repo    stabilityai/stable-diffusion-xl-base-1.0
+      - sdxl-flash                                   #repo    sd-community/sdxl-flash
+
