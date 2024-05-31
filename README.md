@@ -4,7 +4,12 @@ A  HiDiffusion node for ComfyUI
 Update
 -----
 
-2025-05-28 update  
+2025-05-31 update  
+--增加了DMD2加速模型，但是还有bug暂时无法使用。
+--修复controlnet图片的控制，减少一个图片输入几点
+--增加了SDXL-scribble 模型的支持
+
+Previous updates
 --增加了model.yaml文件，你可以修改该文件，添加其他的可能支持“扩散模型”或者“controlnet”或者“unet”模型 ，所有目前支持的模型的repo_id都在该文件的注释里,除了openpose和inpainting   
 --增加了SDXL flash 加速扩散模型的支持，也就是说controlnet节点可以的SDXL模型，还可以用SDXL flash 扩散模型  
 --增加了对anyline（基于mistuline模型）和controlnet 线稿类的canny支持，增加了openposeXL模型的支持（须搭配controlnet openpose）   
@@ -64,13 +69,12 @@ Supported models can refer to the comments in the example JSON file
 5 example
 -----
 use openpose XL model    
-![](https://github.com/smthemex/ComfyUI_HiDiffusion_Pro/blob/main/example/openposeXL.png)
+![](https://github.com/smthemex/ComfyUI_HiDiffusion_Pro/blob/main/example/example_pose.png)
 
 
-use canny XL model or mistoline（anyline）   
-![](https://github.com/smthemex/ComfyUI_HiDiffusion_Pro/blob/main/example/example%20anyline.png)
-![](https://github.com/smthemex/ComfyUI_HiDiffusion_Pro/blob/main/example/example%20artline.png)
-![](https://github.com/smthemex/ComfyUI_HiDiffusion_Pro/blob/main/example/example%20canny.png)
+use canny XL model or mistoline or scribble（anyline）   
+![](https://github.com/smthemex/ComfyUI_HiDiffusion_Pro/blob/main/example/mistoline.png)
+![](https://github.com/smthemex/ComfyUI_HiDiffusion_Pro/blob/main/example/canny.png)
 
 
 use inpainting XL model  
