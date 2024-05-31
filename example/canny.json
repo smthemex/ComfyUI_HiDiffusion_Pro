@@ -1,0 +1,361 @@
+{
+  "last_node_id": 20,
+  "last_link_id": 46,
+  "nodes": [
+    {
+      "id": 2,
+      "type": "HI_Diffusers_Or_Repo",
+      "pos": [
+        734,
+        795
+      ],
+      "size": {
+        "0": 315,
+        "1": 82
+      },
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "repo_id",
+          "type": "STRING",
+          "links": [
+            45
+          ],
+          "shape": 3,
+          "label": "repo_id",
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "HI_Diffusers_Or_Repo"
+      },
+      "widgets_values": [
+        "controlnet-canny-sdxl-1.0",
+        ""
+      ]
+    },
+    {
+      "id": 1,
+      "type": "HI_Diffusers_Or_Repo",
+      "pos": [
+        739,
+        657
+      ],
+      "size": {
+        "0": 315,
+        "1": 82
+      },
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "repo_id",
+          "type": "STRING",
+          "links": [
+            44
+          ],
+          "shape": 3,
+          "label": "repo_id",
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "HI_Diffusers_Or_Repo"
+      },
+      "widgets_values": [
+        "stabilityai\\stable-diffusion-xl-base-1.0",
+        ""
+      ]
+    },
+    {
+      "id": 17,
+      "type": "CannyEdgePreprocessor",
+      "pos": [
+        752,
+        492
+      ],
+      "size": {
+        "0": 315,
+        "1": 106
+      },
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 37,
+          "label": "图像"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            39,
+            43
+          ],
+          "shape": 3,
+          "label": "图像",
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CannyEdgePreprocessor"
+      },
+      "widgets_values": [
+        100,
+        200,
+        512
+      ]
+    },
+    {
+      "id": 4,
+      "type": "LoadImage",
+      "pos": [
+        668,
+        119
+      ],
+      "size": {
+        "0": 394.45263671875,
+        "1": 314
+      },
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            37,
+            42
+          ],
+          "shape": 3,
+          "label": "图像",
+          "slot_index": 0
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null,
+          "shape": 3,
+          "label": "遮罩"
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "lara (1).jpeg",
+        "image"
+      ]
+    },
+    {
+      "id": 18,
+      "type": "PreviewImage",
+      "pos": [
+        1570,
+        161
+      ],
+      "size": {
+        "0": 210,
+        "1": 246
+      },
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 39,
+          "label": "图像"
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "PreviewImage"
+      }
+    },
+    {
+      "id": 20,
+      "type": "SaveImage",
+      "pos": [
+        1549,
+        491
+      ],
+      "size": [
+        315,
+        270
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 46,
+          "label": "图像"
+        }
+      ],
+      "properties": {},
+      "widgets_values": [
+        "ComfyUI"
+      ]
+    },
+    {
+      "id": 19,
+      "type": "Hi_SDXL_Control2Img",
+      "pos": [
+        1105,
+        493
+      ],
+      "size": [
+        400,
+        438
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 42,
+          "label": "image"
+        },
+        {
+          "name": "control_image",
+          "type": "IMAGE",
+          "link": 43,
+          "label": "control_image"
+        },
+        {
+          "name": "repo_id",
+          "type": "STRING",
+          "link": 44,
+          "widget": {
+            "name": "repo_id"
+          }
+        },
+        {
+          "name": "controlnet_repo_id",
+          "type": "STRING",
+          "link": 45,
+          "widget": {
+            "name": "controlnet_repo_id"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "name": "output_image",
+          "type": "IMAGE",
+          "links": [
+            46
+          ],
+          "shape": 3,
+          "label": "output_image",
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "Hi_SDXL_Control2Img"
+      },
+      "widgets_values": [
+        "",
+        "",
+        "Lara Croft with brown hair, and is wearing a tank top, a brown backpack.The room is dark and has an old-fashioned decor with a patterned floor and a wallfeaturing a design with arches and a dark area on the right side, muted color, high detail, 8k high definition award winning",
+        "underexposed, poorly drawn hands, duplicate hands, overexposed,bad art, beginner, amateur, abstract, disfigured, deformed, close up, weird colors, watermark",
+        "Euler",
+        "none",
+        72488577630877,
+        "randomize",
+        20,
+        12.5,
+        1,
+        "img2img",
+        0.5,
+        0.99,
+        1536,
+        2048
+      ]
+    }
+  ],
+  "links": [
+    [
+      37,
+      4,
+      0,
+      17,
+      0,
+      "IMAGE"
+    ],
+    [
+      39,
+      17,
+      0,
+      18,
+      0,
+      "IMAGE"
+    ],
+    [
+      42,
+      4,
+      0,
+      19,
+      0,
+      "IMAGE"
+    ],
+    [
+      43,
+      17,
+      0,
+      19,
+      1,
+      "IMAGE"
+    ],
+    [
+      44,
+      1,
+      0,
+      19,
+      2,
+      "STRING"
+    ],
+    [
+      45,
+      2,
+      0,
+      19,
+      3,
+      "STRING"
+    ],
+    [
+      46,
+      19,
+      0,
+      20,
+      0,
+      "IMAGE"
+    ]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 1.2100000000000009,
+      "offset": [
+        -444.75484856838966,
+        -62.981935160765545
+      ]
+    }
+  },
+  "version": 0.4
+}

@@ -1,78 +1,38 @@
 {
-  "last_node_id": 15,
-  "last_link_id": 31,
+  "last_node_id": 21,
+  "last_link_id": 50,
   "nodes": [
     {
-      "id": 1,
-      "type": "HI_Diffusers_Or_Repo",
-      "pos": [
-        709,
-        620
-      ],
-      "size": {
-        "0": 315,
-        "1": 82
-      },
-      "flags": {},
-      "order": 0,
-      "mode": 0,
-      "outputs": [
-        {
-          "name": "repo_id",
-          "type": "STRING",
-          "links": [
-            24
-          ],
-          "shape": 3,
-          "label": "repo_id",
-          "slot_index": 0
-        }
-      ],
-      "properties": {
-        "Node name for S&R": "HI_Diffusers_Or_Repo"
-      },
-      "widgets_values": [
-        "stabilityai\\stable-diffusion-xl-base-1.0",
-        ""
-      ]
-    },
-    {
-      "id": 11,
+      "id": 19,
       "type": "Hi_SDXL_Control2Img",
       "pos": [
-        1093,
-        437
+        1105,
+        493
       ],
       "size": [
         400,
-        458
+        438
       ],
       "flags": {},
-      "order": 3,
+      "order": 4,
       "mode": 0,
       "inputs": [
         {
           "name": "image",
           "type": "IMAGE",
-          "link": 20,
+          "link": 42,
           "label": "image"
         },
         {
           "name": "control_image",
           "type": "IMAGE",
-          "link": 21,
+          "link": 48,
           "label": "control_image"
-        },
-        {
-          "name": "mask_image",
-          "type": "IMAGE",
-          "link": 29,
-          "label": "mask_image"
         },
         {
           "name": "repo_id",
           "type": "STRING",
-          "link": 24,
+          "link": 44,
           "widget": {
             "name": "repo_id"
           }
@@ -80,11 +40,10 @@
         {
           "name": "controlnet_repo_id",
           "type": "STRING",
-          "link": 25,
+          "link": 45,
           "widget": {
             "name": "controlnet_repo_id"
-          },
-          "slot_index": 4
+          }
         }
       ],
       "outputs": [
@@ -92,7 +51,7 @@
           "name": "output_image",
           "type": "IMAGE",
           "links": [
-            27
+            46
           ],
           "shape": 3,
           "label": "output_image",
@@ -109,92 +68,58 @@
         "underexposed, poorly drawn hands, duplicate hands, overexposed,bad art, beginner, amateur, abstract, disfigured, deformed, close up, weird colors, watermark",
         "Euler",
         "none",
-        589499134882073,
+        383354598672883,
         "randomize",
         20,
         12.5,
         1,
-        "text2img",
+        "img2img",
         0.5,
         0.99,
-        2048,
+        1536,
         2048
       ]
     },
     {
-      "id": 14,
-      "type": "PreviewImage",
+      "id": 1,
+      "type": "HI_Diffusers_Or_Repo",
       "pos": [
-        1112,
-        107
-      ],
-      "size": [
-        380.4094116191245,
-        252.41598609314417
-      ],
-      "flags": {},
-      "order": 6,
-      "mode": 0,
-      "inputs": [
-        {
-          "name": "images",
-          "type": "IMAGE",
-          "link": 31,
-          "label": "图像"
-        }
-      ],
-      "properties": {
-        "Node name for S&R": "PreviewImage"
-      }
-    },
-    {
-      "id": 15,
-      "type": "Scribble_PiDiNet_Preprocessor",
-      "pos": [
-        705,
-        481
+        736,
+        654
       ],
       "size": {
         "0": 315,
         "1": 82
       },
       "flags": {},
-      "order": 4,
+      "order": 0,
       "mode": 0,
-      "inputs": [
-        {
-          "name": "image",
-          "type": "IMAGE",
-          "link": 30,
-          "label": "image"
-        }
-      ],
       "outputs": [
         {
-          "name": "IMAGE",
-          "type": "IMAGE",
+          "name": "repo_id",
+          "type": "STRING",
           "links": [
-            31
+            44
           ],
           "shape": 3,
-          "label": "IMAGE",
+          "label": "repo_id",
           "slot_index": 0
         }
       ],
       "properties": {
-        "Node name for S&R": "Scribble_PiDiNet_Preprocessor"
+        "Node name for S&R": "HI_Diffusers_Or_Repo"
       },
       "widgets_values": [
-        "enable",
-        512
+        "stabilityai\\stable-diffusion-xl-base-1.0",
+        ""
       ]
     },
     {
       "id": 2,
       "type": "HI_Diffusers_Or_Repo",
       "pos": [
-        721,
-        762
+        734,
+        795
       ],
       "size": {
         "0": 315,
@@ -208,7 +133,7 @@
           "name": "repo_id",
           "type": "STRING",
           "links": [
-            25
+            45
           ],
           "shape": 3,
           "label": "repo_id",
@@ -219,21 +144,114 @@
         "Node name for S&R": "HI_Diffusers_Or_Repo"
       },
       "widgets_values": [
-        "xinsir\\controlnet-scribble-sdxl-1.0",
+        "TheMistoAI\\MistoLine",
         ""
       ]
+    },
+    {
+      "id": 21,
+      "type": "AnyLinePreprocessor",
+      "pos": [
+        1162,
+        280
+      ],
+      "size": {
+        "0": 210,
+        "1": 26
+      },
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 49,
+          "label": "image",
+          "slot_index": 0
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            48,
+            50
+          ],
+          "shape": 3,
+          "label": "image",
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "AnyLinePreprocessor"
+      }
+    },
+    {
+      "id": 20,
+      "type": "SaveImage",
+      "pos": [
+        1532,
+        491
+      ],
+      "size": [
+        315,
+        270
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 46,
+          "label": "图像"
+        }
+      ],
+      "properties": {},
+      "widgets_values": [
+        "ComfyUI"
+      ]
+    },
+    {
+      "id": 18,
+      "type": "PreviewImage",
+      "pos": [
+        1552,
+        197
+      ],
+      "size": {
+        "0": 210,
+        "1": 246
+      },
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 50,
+          "label": "图像"
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "PreviewImage"
+      }
     },
     {
       "id": 4,
       "type": "LoadImage",
       "pos": [
-        668,
-        89
+        665,
+        188
       ],
-      "size": [
-        394.45263671875,
-        314
-      ],
+      "size": {
+        "0": 394.45263671875,
+        "1": 314
+      },
       "flags": {},
       "order": 2,
       "mode": 0,
@@ -242,10 +260,8 @@
           "name": "IMAGE",
           "type": "IMAGE",
           "links": [
-            20,
-            21,
-            29,
-            30
+            42,
+            49
           ],
           "shape": 3,
           "label": "图像",
@@ -266,97 +282,62 @@
         "lara (1).jpeg",
         "image"
       ]
-    },
-    {
-      "id": 13,
-      "type": "SaveImage",
-      "pos": [
-        1532,
-        443
-      ],
-      "size": [
-        349.09122980094276,
-        294.37053154768955
-      ],
-      "flags": {},
-      "order": 5,
-      "mode": 0,
-      "inputs": [
-        {
-          "name": "images",
-          "type": "IMAGE",
-          "link": 27,
-          "label": "图像"
-        }
-      ],
-      "properties": {},
-      "widgets_values": [
-        "ComfyUI"
-      ]
     }
   ],
   "links": [
     [
-      20,
+      42,
       4,
       0,
-      11,
+      19,
       0,
       "IMAGE"
     ],
     [
-      21,
-      4,
-      0,
-      11,
+      44,
       1,
-      "IMAGE"
+      0,
+      19,
+      2,
+      "STRING"
     ],
     [
-      24,
-      1,
+      45,
+      2,
       0,
-      11,
+      19,
       3,
       "STRING"
     ],
     [
-      25,
-      2,
+      46,
+      19,
       0,
-      11,
-      4,
-      "STRING"
-    ],
-    [
-      27,
-      11,
-      0,
-      13,
+      20,
       0,
       "IMAGE"
     ],
     [
-      29,
-      4,
+      48,
+      21,
       0,
-      11,
-      2,
+      19,
+      1,
       "IMAGE"
     ],
     [
-      30,
+      49,
       4,
       0,
-      15,
+      21,
       0,
       "IMAGE"
     ],
     [
-      31,
-      15,
+      50,
+      21,
       0,
-      14,
+      18,
       0,
       "IMAGE"
     ]
@@ -365,10 +346,10 @@
   "config": {},
   "extra": {
     "ds": {
-      "scale": 1.1000000000000003,
+      "scale": 1.3310000000000026,
       "offset": [
-        -345.4994462246429,
-        114.9118644700478
+        -472.5145287001144,
+        -80.78322841845348
       ]
     }
   },
