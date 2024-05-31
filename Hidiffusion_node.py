@@ -1,6 +1,6 @@
 # !/usr/bin/env python
 # -*- coding: UTF-8 -*-
-
+import cv2
 import torch
 import os
 from PIL import Image
@@ -25,7 +25,6 @@ file_path = os.path.dirname(path_dir)
 
 paths = []
 paths_a = []
-paths_unet = []
 for search_path in folder_paths.get_folder_paths("diffusers"):
     if os.path.exists(search_path):
         for root, subdir, files in os.walk(search_path, followlinks=True):
@@ -33,15 +32,16 @@ for search_path in folder_paths.get_folder_paths("diffusers"):
                 paths.append(os.path.relpath(root, start=search_path))
             if "config.json" in files:
                 paths_a.append(os.path.relpath(root, start=search_path))
-                paths_a = ([
-                               z for z in paths_a if "controlnet-canny-sdxl-1.0" in z]
+                paths_a = ([z for z in paths_a if "controlnet-canny-sdxl-1.0" in z]
                            + [p for p in paths_a if "MistoLine" in p]
-                           + [o for o in paths_a if "lcm-sdxl" in o] + [Q for Q in paths_a if "controlnet-openpose-sdxl-1.0" in Q])
+                           + [o for o in paths_a if "lcm-sdxl" in o]
+                           + [Q for Q in paths_a if "controlnet-openpose-sdxl-1.0" in Q]
+                           + [Z for Z in paths_a if "controlnet-scribble-sdxl-1.0" in Z])
 
 if paths != [] or paths_a != []:
-    paths = [] + [x for x in paths if x] + [y for y in paths_a if y]
+    paths = ["none"] + [x for x in paths if x] + [y for y in paths_a if y]
 else:
-    paths = ["no model in default diffusers directory", ]
+    paths = ["none",]
 
 scheduler_list = [
     "Euler",
@@ -66,13 +66,24 @@ scheduler_list = [
     "TCD"
 ]
 
-fs = open(os.path.join(dir_path,"model.yaml"),encoding="UTF-8")
-datas = yaml.load(fs,Loader=yaml.FullLoader)  #添加后就不警告了
+fs = open(os.path.join(dir_path, "model.yaml"), encoding="UTF-8")
+datas = yaml.load(fs, Loader=yaml.FullLoader)  # 添加后就不警告了
 
 normal_model_list = datas["surport_model"]
-sdxl_lightning_list =datas["lightning_unet"]
+sdxl_lightning_list = datas["lightning_unet"]
 controlnet_suport = datas["surport_controlnet"]
-xl_model_support =datas["sdxl_model"]
+xl_model_support = datas["sdxl_model"]
+
+lcm_unet = ["dmd2_sdxl_4step_unet_fp16.bin", "dmd2_sdxl_1step_unet_fp16.bin", "lcm-sdxl-base-1.0.safetensors",
+            "Hyper-SDXL-1step-Unet.safetensors"]
+
+
+def crop_center(img, cropx, cropy):
+    y, x, _ = img.shape
+    startx = x // 2 - (cropx // 2)
+    starty = y // 2 - (cropy // 2)
+    return img[starty:starty + cropy, startx:startx + cropx]
+
 
 def get_sheduler(name):
     scheduler = False
@@ -119,6 +130,31 @@ def get_sheduler(name):
     return scheduler
 
 
+def img_resize(img, width, height):
+    height_img, width_img, _ = img.shape
+    if height / width != 1:
+        long_side_ratio_out = max(width, height)
+    if height_img / width_img != 1:
+        short_side_ratio_in = min(height_img, height_img)
+    if height / width == 1:
+        if height_img / width_img == 1:
+            ratio = np.sqrt(1024. * 1024. / (width_img * height_img))
+        else:
+            ratio = height / short_side_ratio_in
+    else:
+        if height_img / width_img == 1:
+            ratio = long_side_ratio_out / height_img
+        else:
+            width_factor = width / width_img
+            height_factor = height / height_img
+            ratio = max(width_factor, height_factor)
+    new_width, new_height = int(width_img * ratio), int(height_img * ratio)
+    controlnet_img = cv2.resize(img, (new_width, new_height))
+    controlnet_img = crop_center(controlnet_img, width, height)
+    img = Image.fromarray(controlnet_img)
+    return img
+
+
 def tensor_to_image(tensor):
     tensor = tensor.cpu()
     image_np = tensor.squeeze().mul(255).clamp(0, 255).byte().numpy()
@@ -126,22 +162,27 @@ def tensor_to_image(tensor):
     return image
 
 
+def pil2cv(img):
+    img_cv = cv2.cvtColor(np.asarray(img), cv2.COLOR_RGB2BGR)
+    return img_cv
+
+
 def get_local_path(file_path, model_path):
     path = os.path.join(file_path, "models", "diffusers", model_path)
     model_path = os.path.normpath(path)
-    if sys.platform.startswith('win32'):
+    if sys.platform == 'win32':
         model_path = model_path.replace('\\', "/")
     return model_path
 
 
 def get_instance_path(path):
     instance_path = os.path.normpath(path)
-    if sys.platform.startswith('win32'):
+    if sys.platform == 'win32':
         instance_path = instance_path.replace('\\', "/")
     return instance_path
 
 
-class Diffusers_Or_Repo_Choice:
+class HI_Diffusers_Or_Repo:
     def __init__(self):
         pass
 
@@ -161,9 +202,9 @@ class Diffusers_Or_Repo_Choice:
 
     def repo_choice(self, local_model_path, repo_id):
         if repo_id == "":
-            if local_model_path == ["no model in default diffusers directory", ]:
+            if local_model_path == "none":
                 raise "you need fill repo_id or download model in diffusers directory "
-            elif local_model_path != ["no model in default diffusers directory", ]:
+            elif local_model_path != "none":
                 model_path = get_local_path(file_path, local_model_path)
                 repo_id = get_instance_path(model_path)
         elif repo_id != "" and repo_id.find("/") == -1:
@@ -212,13 +253,12 @@ class Hi_Text2Img:
             if unet_model in sdxl_lightning_list:
                 light_path = os.path.join(file_path, "models", "unet", unet_model)
                 ckpt = get_instance_path(light_path)
-                # UNet2DConditionModel.load_config(repo_id, subfolder="unet")
                 unet = UNet2DConditionModel.from_pretrained(repo_id, subfolder="unet").to("cuda", torch.float16)
                 unet.load_state_dict(load_file(ckpt, device="cuda"), strict=False, )
                 pipe = StableDiffusionXLPipeline.from_pretrained(repo_id, unet=unet, torch_dtype=torch.float16,
                                                                  variant="fp16").to("cuda")
                 # Ensure sampler uses "trailing" timesteps.
-                if unet_model == "lcm-sdxl-base-1.0.safetensors" or unet_model == "Hyper-SDXL-1step-Unet.safetensors":
+                if unet_model in lcm_unet:
                     pipe.scheduler = LCMScheduler.from_config(pipe.scheduler.config, timestep_spacing="trailing")
                 else:
                     pipe.scheduler = scheduler_used.from_config(pipe.scheduler.config, timestep_spacing="trailing")
@@ -246,27 +286,28 @@ class Hi_Text2Img:
         image = pipe(prompt, num_inference_steps=steps, guidance_scale=cfg, height=height, width=width, eta=eta,
                      seed=seed, negative_prompt=negative_prompt).images[0]
         output_image = torch.from_numpy(np.array(image).astype(np.float32) / 255.0).unsqueeze(0)
+        del pipe
         return (output_image,)
 
 
-class Hi_Control2Img:
+class Hi_SDXL_Control2Img:
     def __init__(self):
         pass
 
     def inpainting_gener(self, image, repo_id, controlnet_repo_id, prompt, negative_prompt, scheduler,
-                         unet_model, model_type, seed, steps, cfg, eta, controlnet_strength, height, width, mask_image):
+                         unet_model, model_type, seed, steps, cfg, eta, controlnet_strength, height, width,
+                         control_image):
         scheduler_used = get_sheduler(scheduler)
         scheduler = scheduler_used.from_pretrained(repo_id, subfolder="scheduler")
         if unet_model in sdxl_lightning_list:
             light_path = os.path.join(file_path, "models", "unet", unet_model)
             ckpt = get_instance_path(light_path)
-            # UNet2DConditionModel.load_config(repo_id, subfolder="unet")
             unet = UNet2DConditionModel.from_pretrained(repo_id, subfolder="unet").to("cuda", torch.float16)
             unet.load_state_dict(load_file(ckpt, device="cuda"), strict=False, )
             pipe = StableDiffusionXLPipeline.from_pretrained(repo_id, unet=unet, torch_dtype=torch.float16,
                                                              variant="fp16").to("cuda")
             # Ensure sampler uses "trailing" timesteps.
-            if unet_model == "lcm-sdxl-base-1.0.safetensors" or unet_model == "Hyper-SDXL-1step-Unet.safetensors":
+            if unet_model in lcm_unet:
                 pipe.scheduler = LCMScheduler.from_config(pipe.scheduler.config, timestep_spacing="trailing")
             else:
                 pipe.scheduler = scheduler_used.from_config(pipe.scheduler.config, timestep_spacing="trailing")
@@ -280,9 +321,13 @@ class Hi_Control2Img:
         pipe.enable_model_cpu_offload()
         pipe.enable_vae_tiling()
 
-        output_img = pipe(prompt=prompt, image=image, mask_image=mask_image, height=height, width=width,
+        control_image = pil2cv(control_image)
+        control_image = img_resize(control_image, width, height)  # 预处理图片 尤其是非1024*1024的尺度
+
+        output_img = pipe(prompt=prompt, image=image, mask_image=control_image, height=height, width=width,
                           strength=controlnet_strength, num_inference_steps=steps, seed=seed,
                           guidance_scale=cfg, negative_prompt=negative_prompt, eta=eta).images[0]
+        del pipe
         return output_img
 
     def control_img2img(self, image, prompt, negative_prompt, repo_id, controlnet_repo_id, scheduler,
@@ -294,14 +339,12 @@ class Hi_Control2Img:
         if unet_model in sdxl_lightning_list:
             light_path = os.path.join(file_path, "models", "unet", unet_model)
             ckpt = get_instance_path(light_path)
-
-            # UNet2DConditionModel.load_config(repo_id, subfolder="unet")
             unet = UNet2DConditionModel.from_pretrained(repo_id, subfolder="unet").to("cuda", torch.float16)
             unet.load_state_dict(load_file(ckpt, device="cuda"), strict=False, )
             pipe = StableDiffusionXLPipeline.from_pretrained(repo_id, unet=unet, torch_dtype=torch.float16,
                                                              variant="fp16").to("cuda")
             # Ensure sampler uses "trailing" timesteps.
-            if unet_model == "lcm-sdxl-base-1.0.safetensors" or unet_model == "Hyper-SDXL-1step-Unet.safetensors":
+            if unet_model in lcm_unet:
                 pipe.scheduler = LCMScheduler.from_config(pipe.scheduler.config, timestep_spacing="trailing")
             else:
                 pipe.scheduler = scheduler_used.from_config(pipe.scheduler.config, timestep_spacing="trailing")
@@ -328,6 +371,7 @@ class Hi_Control2Img:
                           negative_prompt=negative_prompt,
                           eta=eta
                           ).images[0]
+        del pipe
         return output_img
 
     def control_txt2img(self, prompt, negative_prompt, repo_id, controlnet_repo_id, scheduler,
@@ -339,13 +383,12 @@ class Hi_Control2Img:
         if unet_model in sdxl_lightning_list:
             light_path = os.path.join(file_path, "models", "unet", unet_model)
             ckpt = get_instance_path(light_path)
-            # UNet2DConditionModel.load_config(repo_id, subfolder="unet")
             unet = UNet2DConditionModel.from_config(repo_id, subfolder="unet").to("cuda", torch.float16)
             unet.load_state_dict(load_file(ckpt, device="cuda"), strict=False, )
             pipe = StableDiffusionXLPipeline.from_pretrained(repo_id, unet=unet, torch_dtype=torch.float16,
                                                              variant="fp16").to("cuda")
             # Ensure sampler uses "trailing" timesteps.
-            if unet_model == "lcm-sdxl-base-1.0.safetensors" or unet_model == "Hyper-SDXL-1step-Unet.safetensors":
+            if unet_model in lcm_unet:
                 pipe.scheduler = LCMScheduler.from_config(pipe.scheduler.config, timestep_spacing="trailing")
             else:
                 pipe.scheduler = scheduler_used.from_config(pipe.scheduler.config, timestep_spacing="trailing")
@@ -360,17 +403,21 @@ class Hi_Control2Img:
         pipe.enable_model_cpu_offload()
         pipe.enable_vae_tiling()
 
+        control_image = pil2cv(control_image)
+        control_image = img_resize(control_image, width, height)  # 预处理图片 尤其是非1024*1024的尺度
+
         output_img = pipe(
             prompt=prompt, controlnet_conditioning_scale=controlnet_conditioning_scale, image=control_image,
             height=height, width=width, guidance_scale=cfg, negative_prompt=negative_prompt, seed=seed,
             strength=controlnet_strength,
             num_inference_steps=steps, eta=eta
         ).images[0]
+        del pipe
         return output_img
 
     def openpose_gener(self, prompt, negative_prompt, repo_id, controlnet_repo_id, scheduler,
                        unet_model, model_type, seed, steps, cfg, eta, controlnet_conditioning_scale,
-                       controlnet_strength, height, width, mask_image):
+                       controlnet_strength, height, width, control_image):
         scheduler_used = get_sheduler(scheduler)
         controlnet = ControlNetModel.from_pretrained(controlnet_repo_id, torch_dtype=torch.float16,
                                                      variant="fp16").to("cuda")
@@ -378,13 +425,12 @@ class Hi_Control2Img:
         if unet_model in sdxl_lightning_list:
             light_path = os.path.join(file_path, "models", "unet", unet_model)
             ckpt = get_instance_path(light_path)
-            # UNet2DConditionModel.load_config(repo_id, subfolder="unet")
             unet = UNet2DConditionModel.from_config(repo_id, subfolder="unet").to("cuda", torch.float16)
             unet.load_state_dict(load_file(ckpt, device="cuda"), strict=False, )
             pipe = StableDiffusionXLPipeline.from_pretrained(repo_id, unet=unet, torch_dtype=torch.float16,
                                                              variant="fp16").to("cuda")
             # Ensure sampler uses "trailing" timesteps.
-            if unet_model == "lcm-sdxl-base-1.0.safetensors" or unet_model == "Hyper-SDXL-1step-Unet.safetensors":
+            if unet_model in lcm_unet:
                 pipe.scheduler = LCMScheduler.from_config(pipe.scheduler.config, timestep_spacing="trailing")
             else:
                 pipe.scheduler = scheduler_used.from_config(pipe.scheduler.config, timestep_spacing="trailing")
@@ -400,12 +446,58 @@ class Hi_Control2Img:
         pipe.enable_model_cpu_offload()
         pipe.enable_vae_tiling()
 
+        control_image = pil2cv(control_image)
+        control_image = img_resize(control_image, width, height)  # 预处理图片 尤其是非1024*1024的尺度
+
         output_img = pipe(
-            prompt=prompt, controlnet_conditioning_scale=controlnet_conditioning_scale, image=mask_image,
+            prompt=prompt, controlnet_conditioning_scale=controlnet_conditioning_scale, image=control_image,
             height=height, width=width, guidance_scale=cfg, negative_prompt=negative_prompt, seed=seed,
             strength=controlnet_strength,
             num_inference_steps=steps, eta=eta
         ).images[0]
+        del pipe
+        return output_img
+
+    def scribble_gener(self, prompt, negative_prompt, repo_id, controlnet_repo_id, scheduler,
+                       unet_model, model_type, seed, steps, cfg, eta, controlnet_conditioning_scale,
+                       controlnet_strength, height, width, control_image):
+        scheduler_used = get_sheduler(scheduler)
+        controlnet = ControlNetModel.from_pretrained(controlnet_repo_id, torch_dtype=torch.float16,
+                                                     variant="fp16").to("cuda")
+        vae = AutoencoderKL.from_pretrained("madebyollin/sdxl-vae-fp16-fix", torch_dtype=torch.float16)
+        if unet_model in sdxl_lightning_list:
+            light_path = os.path.join(file_path, "models", "unet", unet_model)
+            ckpt = get_instance_path(light_path)
+            unet = UNet2DConditionModel.from_config(repo_id, subfolder="unet").to("cuda", torch.float16)
+            unet.load_state_dict(load_file(ckpt, device="cuda"), strict=False, )
+            pipe = StableDiffusionXLPipeline.from_pretrained(repo_id, unet=unet, torch_dtype=torch.float16,
+                                                             variant="fp16").to("cuda")
+            # Ensure sampler uses "trailing" timesteps.
+            if unet_model in lcm_unet:
+                pipe.scheduler = LCMScheduler.from_config(pipe.scheduler.config, timestep_spacing="trailing")
+            else:
+                pipe.scheduler = scheduler_used.from_config(pipe.scheduler.config, timestep_spacing="trailing")
+        else:
+            scheduler = scheduler_used.from_pretrained(repo_id, subfolder="scheduler")
+            pipe = StableDiffusionXLControlNetPipeline.from_pretrained(
+                repo_id, controlnet=controlnet, vae=vae, torch_dtype=torch.float16,
+                scheduler=scheduler
+            )
+        control_image = pil2cv(control_image)
+        control_image = img_resize(control_image, width, height)  # 预处理图片 尤其是非1024*1024的尺度
+
+        apply_hidiffusion(pipe)
+        pipe.enable_xformers_memory_efficient_attention()
+        pipe.enable_model_cpu_offload()
+        pipe.enable_vae_tiling()
+
+        output_img = pipe(
+            prompt=prompt, controlnet_conditioning_scale=controlnet_conditioning_scale, image=control_image,
+            height=height, width=width, guidance_scale=cfg, negative_prompt=negative_prompt, seed=seed,
+            strength=controlnet_strength,
+            num_inference_steps=steps, eta=eta
+        ).images[0]
+        del pipe
         return output_img
 
     @classmethod
@@ -445,7 +537,6 @@ class Hi_Control2Img:
             },
             "optional": {
                 "control_image": ("IMAGE",),
-                "mask_image": ("IMAGE",)
             }
         }
 
@@ -458,24 +549,28 @@ class Hi_Control2Img:
                             unet_model, seed, steps, cfg,
                             eta, controlnet_choice,
                             controlnet_conditioning_scale, controlnet_strength, height, width, control_image,
-                            mask_image, ):
+                            ):
 
         image = tensor_to_image(image)
-        control_image = np.transpose(control_image, (
-        0, 3, 1, 2))  # 将comfy输入的（batch_size,channels,rows,cols）改成条件需求的（3通道，16输出，3，1 ，pading=1）
-        mask_image = tensor_to_image(mask_image)
+        control_image = tensor_to_image(control_image)
+        # control_image = np.transpose(control_image, (
+        #     0, 3, 1, 2))  # 将comfy输入的（batch_size,channels,rows,cols）改成条件需求的（3通道，16输出，3，1 ，pading=1）
         model_type = repo_id.rsplit("/")[-1]
         control_model_type = controlnet_repo_id.rsplit("/")[-1]
-
-
         if control_model_type == "stable-diffusion-xl-1.0-inpainting-0.1":
             output_img = self.inpainting_gener(image, repo_id, controlnet_repo_id, prompt, negative_prompt, scheduler,
                                                unet_model, model_type, seed, steps, cfg, eta, controlnet_strength,
-                                               height, width, mask_image)
+                                               height, width, control_image)
         elif control_model_type == "controlnet-openpose-sdxl-1.0":
             output_img = self.openpose_gener(prompt, negative_prompt, repo_id, controlnet_repo_id, scheduler,
-                       unet_model, model_type, seed, steps, cfg, eta, controlnet_conditioning_scale,
-                       controlnet_strength, height, width, mask_image)
+                                             unet_model, model_type, seed, steps, cfg, eta,
+                                             controlnet_conditioning_scale,
+                                             controlnet_strength, height, width, control_image)
+        elif control_model_type == "controlnet-scribble-sdxl-1.0":
+            output_img = self.scribble_gener(prompt, negative_prompt, repo_id, controlnet_repo_id, scheduler,
+                                             unet_model, model_type, seed, steps, cfg, eta,
+                                             controlnet_conditioning_scale,
+                                             controlnet_strength, height, width, control_image)
         elif control_model_type in controlnet_suport:
             if controlnet_choice == "img2img":
                 output_img = self.control_img2img(image, prompt, negative_prompt, repo_id, controlnet_repo_id,
@@ -495,13 +590,13 @@ class Hi_Control2Img:
 
 
 NODE_CLASS_MAPPINGS = {
-    "Diffusers_Or_Repo_Choice": Diffusers_Or_Repo_Choice,
+    "HI_Diffusers_Or_Repo": HI_Diffusers_Or_Repo,
     "Hi_Text2Img": Hi_Text2Img,
-    "Hi_Control2Img": Hi_Control2Img
+    "Hi_SDXL_Control2Img": Hi_SDXL_Control2Img
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "Diffusers_Or_Repo_Choice": "Diffusers_Or_Repo_Choice",
+    "HI_Diffusers_Or_Repo": "HI_Diffusers_Or_Repo",
     "Hi_Text2Img": "Hi_Text2Img",
-    "Hi_Control2Img": "Hi_Control2Img"
+    "Hi_SDXL_Control2Img": "Hi_SDXL_Control2Img"
 }
