@@ -5,6 +5,8 @@ lightning_unet:
       - sdxl_lightning_8step_unet.safetensors        
       - Hyper-SDXL-1step-Unet.safetensors            #repo    ByteDance/Hyper-SD
       - lcm-sdxl-base-1.0.safetensors                #repo    ckpt/lcm-sdxl-unet    you can change model name like example
+      - dmd2_sdxl_1step_unet_fp16.bin                #repo    tianweiy/DMD2
+      - dmd2_sdxl_4step_unet_fp16.bin
 surport_model:                                                        
       - stable-diffusion-v1-5                        #repo    runwayml/stable-diffusion-v1-5
       - stable-diffusion-2-1-base                    #repo    stabilityai/stable-diffusion-2-1-base
