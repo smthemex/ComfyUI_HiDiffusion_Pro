@@ -1,27 +1,32 @@
 # ComfyUI_HiDiffusion_Pro
 A  HiDiffusion node for ComfyUI
 
-Update
+2024-06-01 update 
 -----
+--修复使用加速模型时，controlnet无效的错误。   
+--DMD2加速模型已可以正常使用   
+--内置图片裁切功能   
+--模型加载节点连接controlnet_repo节点时，可以为空或者其他不支持的模型，此时，text2img 和img2img生效，就是文生图和图生图，没有controlnet功能，也就是说文生图节点其实可以删掉了    
+--菜单加入timestpes，对于LCM模型，可以试着改成例如390，128或者其他小于999的数字，或许效果会更佳。   
 
-2025-05-31 update      
---增加了DMD2加速模型，但是还有bug暂时无法使用；  
---修复controlnet图片的控制，减少一个图片输入节点；  
---增加了SDXL-scribble 模型的支持。   
+Previous updates       
+--增加了SDXL-scribble 模型的支持。     
+--增加了model.yaml文件，你可以修改该文件，添加其他的可能支持“扩散模型”或者“controlnet”或者“unet”模型 ，所有目前支持的模型的repo_id都在该文件的注释里,除了openpose和inpainting        
+--增加了SDXL flash 加速扩散模型的支持，也就是说controlnet节点可以的SDXL模型，还可以用SDXL flash 扩散模型       
+--增加了对anyline（基于mistuline模型）和controlnet 线稿类的canny支持，增加了openposeXL模型的支持（须搭配controlnet openpose）       
+--所有节点都支持XL-lighting\Hyper\LCM\DMD2\ Unet加速，建议适当提高步数   
 
-Previous updates   
---增加了model.yaml文件，你可以修改该文件，添加其他的可能支持“扩散模型”或者“controlnet”或者“unet”模型 ，所有目前支持的模型的repo_id都在该文件的注释里,除了openpose和inpainting    
---增加了SDXL flash 加速扩散模型的支持，也就是说controlnet节点可以的SDXL模型，还可以用SDXL flash 扩散模型     
---增加了对anyline（基于mistuline模型）和controlnet 线稿类的canny支持，增加了openposeXL模型的支持（须搭配controlnet openpose）     
---增加了模型输入节点，该节点的菜单用于已下载的本地模型，repo_id更方便，但需要网络支持  
---所有节点都支持XL-lighting\Hyper\LCM Unet加速，但是低步数的效果一般  
-
---Added model.yaml file, you can modify it and add other models that may support “diffusers model”, “controllnet”, or “unet” models
---Added support for the SDXL flash accelerated diffusion model, which means that the control net node can use the SDXL model, and the SDXL flash diffusion model can also be used  
---Added Canny support for Anyline (based on the pipeline model) and Controlnet draft classes, and added support for Openpose XL model (to be paired with Controlnet Openpose)   
---Added a model input node, whose menu is used for downloaded local models. Repo_id is more convenient, but requires network support   
---All nodes support XL lighting \ Hyper \ LCM Unet acceleration, but the effect of low steps is average   
-
+--Fix the error where controllnet is invalid when using accelerated models.   
+--The DMD2 acceleration model is now functioning properly   
+--Built in image cropping function   
+--When the model loading node is connected to the controllet-repo node, it can be empty or other unsupported models. In this case, text2img and img2img take effect, which are the text generated graph and graph generated graph. There is no controllnet function, which means that the text generated graph node can actually be deleted   
+--Add timestepes to the menu. For the LCM model, you can try changing it to 390 or other numbers smaller than 999 for better results.   
+Previous updates        
+--Added support for SDXL capable models.    
+--Added model.yaml file, you can modify it and add other models that may support "diffusion model", "controllet", or "unet". The repo_id of all currently supported models is in the comments of this file, except for openpose and repainting    
+--Added support for the SDXL flash accelerated diffusion model, which means that the control net node can use the SDXL model, and the SDXL flash diffusion model can also be used    
+--Added Canny support for Anyline (based on the pipeline model) and Controlnet draft classes, and added support for Openpose XL model (to be paired with Controlnet Openpose)    
+--All nodes support XL lighting, Hyper, LCM, DMD2, Unet acceleration, it is recommended to increase the number of steps appropriately    
 
 NOTICE
 ----
@@ -63,18 +68,18 @@ yaml
 
 4 other
 ----
-可用的模型可用加载默认的工作流文件，查看其注释  
-Supported models can refer to the comments in the example JSON file  
+部分支持的模型请查看model.yaml 文件    
+For partially supported models, please refer to the model.yaml file   
 
 5 example
 -----
 use openpose XL model    
-![](https://github.com/smthemex/ComfyUI_HiDiffusion_Pro/blob/main/example/example_pose.png)
+![](https://github.com/smthemex/ComfyUI_HiDiffusion_Pro/blob/main/example/openpose%20and%20hyper%204%20step.png)
 
 
 use canny XL model or mistoline or scribble（anyline）   
 ![](https://github.com/smthemex/ComfyUI_HiDiffusion_Pro/blob/main/example/mistoline.png)
-![](https://github.com/smthemex/ComfyUI_HiDiffusion_Pro/blob/main/example/canny.png)
+![](https://github.com/smthemex/ComfyUI_HiDiffusion_Pro/blob/main/example/canny%20and%20DMD2.png)
 
 
 use inpainting XL model  
@@ -83,6 +88,8 @@ use inpainting XL model
 txt2img  use XL/sd1.5/XL turbo/background...   
 ![](https://github.com/smthemex/ComfyUI_HiDiffusion_Pro/blob/main/example/txt2img.png)
  
+img2img  use XL XL-flash or base XL
+![](https://github.com/smthemex/ComfyUI_HiDiffusion_Pro/blob/main/example/img2img.png)
 
 6 Citation
 ------
