@@ -77,7 +77,7 @@ def sdxl_turbo_hidiffusion_key():
 supported_official_model = [
     'runwayml/stable-diffusion-v1-5', 'stabilityai/stable-diffusion-2-1-base',
     'stabilityai/stable-diffusion-xl-base-1.0', 'diffusers/stable-diffusion-xl-1.0-inpainting-0.1',
-    'stabilityai/sdxl-turbo'
+    'stabilityai/sdxl-turbo','sd-community/sdxl-flash'
 ]
 
 
@@ -1945,8 +1945,13 @@ def apply_hidiffusion(
     diffusion_model.num_upsamplers += 2
     
     name_or_path = model.name_or_path
+    count = name_or_path.count('/')
+    if count > 1:  # 输入本地路径时，对模型名进行处理
+        x = name_or_path.rsplit('/', 2)[-2:]
+        name_or_path= '/'.join((x[0], x[1]))
+    print(name_or_path)
     diffusion_model_module_key = []
-    if name_or_path not in supported_official_model:
+    if name_or_path not in supported_official_model:  # 这里把非支持的模型都划入sd1.5和XL2类，所以有些非XL底模没法用
         for key, module in diffusion_model.named_modules():
             diffusion_model_module_key.append(key)
         if set(sd15_module_key) < set(diffusion_model_module_key):
@@ -1989,7 +1994,7 @@ def apply_hidiffusion(
             module.model = 'sd15'
             module.info = diffusion_model.info
             
-    elif name_or_path in ['stabilityai/stable-diffusion-xl-base-1.0', 'diffusers/stable-diffusion-xl-1.0-inpainting-0.1']: 
+    elif name_or_path in ['stabilityai/stable-diffusion-xl-base-1.0', 'diffusers/stable-diffusion-xl-1.0-inpainting-0.1','sd-community/sdxl-flash']:
         modified_key = sdxl_hidiffusion_key()
         for key, module in diffusion_model.named_modules():
             if apply_raunet and key in modified_key['down_module_key']:
