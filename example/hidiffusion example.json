@@ -1,0 +1,959 @@
+{
+  "last_node_id": 33,
+  "last_link_id": 46,
+  "nodes": [
+    {
+      "id": 25,
+      "type": "SaveImage",
+      "pos": [
+        4700.397724609373,
+        -210.1020864257812
+      ],
+      "size": {
+        "0": 315,
+        "1": 58
+      },
+      "flags": {},
+      "order": 12,
+      "mode": 2,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 35,
+          "label": "图像"
+        }
+      ],
+      "properties": {},
+      "widgets_values": [
+        "ComfyUI"
+      ]
+    },
+    {
+      "id": 23,
+      "type": "HI_Diffusers_Or_Repo",
+      "pos": [
+        3905.3977246093755,
+        -216.1020864257812
+      ],
+      "size": {
+        "0": 315,
+        "1": 82
+      },
+      "flags": {},
+      "order": 0,
+      "mode": 2,
+      "outputs": [
+        {
+          "name": "repo_id",
+          "type": "STRING",
+          "links": [
+            34
+          ],
+          "shape": 3,
+          "label": "repo_id",
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "HI_Diffusers_Or_Repo"
+      },
+      "widgets_values": [
+        "none",
+        "stabilityai/stable-diffusion-xl-base-1.0"
+      ]
+    },
+    {
+      "id": 24,
+      "type": "Hi_Text2Img",
+      "pos": [
+        4248,
+        -213
+      ],
+      "size": [
+        400,
+        346
+      ],
+      "flags": {},
+      "order": 8,
+      "mode": 2,
+      "inputs": [
+        {
+          "name": "repo_id",
+          "type": "STRING",
+          "link": 34,
+          "widget": {
+            "name": "repo_id"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "name": "output_image",
+          "type": "IMAGE",
+          "links": [
+            35
+          ],
+          "shape": 3,
+          "label": "output_image",
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "Hi_Text2Img"
+      },
+      "widgets_values": [
+        "Standing tall amidst the ruins, a stone golem awakens, vines and flowers sprouting from the crevices in its body",
+        "blurry, ugly, duplicate, poorly drawn face, deformed, mosaic, artifacts, bad limbs",
+        "",
+        "Euler",
+        "none",
+        0,
+        "randomize",
+        50,
+        7.5,
+        1,
+        0,
+        2048,
+        2048
+      ]
+    },
+    {
+      "id": 26,
+      "type": "Hi_SDXL_Control2Img",
+      "pos": [
+        5620.876806429751,
+        -126.77608461090514
+      ],
+      "size": [
+        419.09814453125,
+        591.9691772460938
+      ],
+      "flags": {},
+      "order": 9,
+      "mode": 2,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 38,
+          "label": "image",
+          "slot_index": 0
+        },
+        {
+          "name": "control_image",
+          "type": "IMAGE",
+          "link": 39,
+          "label": "control_image"
+        },
+        {
+          "name": "repo_id",
+          "type": "STRING",
+          "link": 40,
+          "widget": {
+            "name": "repo_id"
+          },
+          "slot_index": 2,
+          "label": "repo_id"
+        },
+        {
+          "name": "controlnet_repo_id",
+          "type": "STRING",
+          "link": 41,
+          "widget": {
+            "name": "controlnet_repo_id"
+          },
+          "label": "controlnet_repo_id"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "output_image",
+          "type": "IMAGE",
+          "links": [],
+          "shape": 3,
+          "label": "output_image",
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "Hi_SDXL_Control2Img"
+      },
+      "widgets_values": [
+        "",
+        "",
+        "Lara Croft with brown hair, and is wearing a tank top, a brown backpack.The room is dark and has an old-fashioned decor with a patterned floor and a wallfeaturing a design with arches and a dark area on the right side, muted color, high detail, 8k high definition award winning",
+        "underexposed, poorly drawn hands, duplicate hands, overexposed,bad art, beginner, amateur, abstract, disfigured, deformed, close up, weird colors, watermark",
+        "Euler",
+        "Hyper-SDXL-1step-Unet.safetensors",
+        468685474214405,
+        "randomize",
+        4,
+        2,
+        1,
+        "img2img",
+        0.5,
+        0.99,
+        0,
+        1536,
+        2048
+      ]
+    },
+    {
+      "id": 29,
+      "type": "LoadImage",
+      "pos": [
+        5220.876806429751,
+        -129.77608461090512
+      ],
+      "size": [
+        315,
+        314.00000381469727
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 2,
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            38,
+            39
+          ],
+          "shape": 3,
+          "label": "图像",
+          "slot_index": 0
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null,
+          "shape": 3,
+          "label": "遮罩"
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "002-austin-residence-studio-dubois-1390x912.jpg",
+        "image"
+      ]
+    },
+    {
+      "id": 31,
+      "type": "LoadImage",
+      "pos": [
+        3918,
+        219
+      ],
+      "size": {
+        "0": 315,
+        "1": 314
+      },
+      "flags": {},
+      "order": 2,
+      "mode": 2,
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            42,
+            43
+          ],
+          "shape": 3,
+          "label": "图像",
+          "slot_index": 0
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null,
+          "shape": 3,
+          "label": "遮罩"
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "002-austin-residence-studio-dubois-1390x912.jpg",
+        "image"
+      ]
+    },
+    {
+      "id": 28,
+      "type": "HI_Diffusers_Or_Repo",
+      "pos": [
+        5219.876806429751,
+        280.2239153890948
+      ],
+      "size": {
+        "0": 315,
+        "1": 82
+      },
+      "flags": {},
+      "order": 3,
+      "mode": 2,
+      "outputs": [
+        {
+          "name": "repo_id",
+          "type": "STRING",
+          "links": [
+            40,
+            41
+          ],
+          "shape": 3,
+          "label": "repo_id",
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "HI_Diffusers_Or_Repo"
+      },
+      "widgets_values": [
+        "none",
+        "stabilityai/stable-diffusion-xl-base-1.0"
+      ]
+    },
+    {
+      "id": 32,
+      "type": "HI_Diffusers_Or_Repo",
+      "pos": [
+        4011,
+        651
+      ],
+      "size": {
+        "0": 315,
+        "1": 82
+      },
+      "flags": {},
+      "order": 4,
+      "mode": 2,
+      "outputs": [
+        {
+          "name": "repo_id",
+          "type": "STRING",
+          "links": [
+            44,
+            45
+          ],
+          "shape": 3,
+          "label": "repo_id",
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "HI_Diffusers_Or_Repo"
+      },
+      "widgets_values": [
+        "diffusers\\stable-diffusion-xl-1.0-inpainting-0.1",
+        "stabilityai/stable-diffusion-xl-base-1.0"
+      ]
+    },
+    {
+      "id": 30,
+      "type": "Hi_SDXL_Control2Img",
+      "pos": [
+        4344,
+        217
+      ],
+      "size": [
+        419.09814453125,
+        591.9691772460938
+      ],
+      "flags": {},
+      "order": 10,
+      "mode": 2,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 42,
+          "label": "image",
+          "slot_index": 0
+        },
+        {
+          "name": "control_image",
+          "type": "IMAGE",
+          "link": 43,
+          "label": "control_image"
+        },
+        {
+          "name": "repo_id",
+          "type": "STRING",
+          "link": 44,
+          "widget": {
+            "name": "repo_id"
+          },
+          "slot_index": 2,
+          "label": "repo_id"
+        },
+        {
+          "name": "controlnet_repo_id",
+          "type": "STRING",
+          "link": 45,
+          "widget": {
+            "name": "controlnet_repo_id"
+          },
+          "label": "controlnet_repo_id"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "output_image",
+          "type": "IMAGE",
+          "links": [
+            46
+          ],
+          "shape": 3,
+          "label": "output_image",
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "Hi_SDXL_Control2Img"
+      },
+      "widgets_values": [
+        "",
+        "",
+        "Lara Croft with brown hair, and is wearing a tank top, a brown backpack.The room is dark and has an old-fashioned decor with a patterned floor and a wallfeaturing a design with arches and a dark area on the right side, muted color, high detail, 8k high definition award winning",
+        "underexposed, poorly drawn hands, duplicate hands, overexposed,bad art, beginner, amateur, abstract, disfigured, deformed, close up, weird colors, watermark",
+        "Euler",
+        "Hyper-SDXL-1step-Unet.safetensors",
+        468685474214405,
+        "randomize",
+        4,
+        2,
+        1,
+        "text2img",
+        0.5,
+        0.99,
+        0,
+        1536,
+        2048
+      ]
+    },
+    {
+      "id": 33,
+      "type": "SaveImage",
+      "pos": [
+        4781,
+        318
+      ],
+      "size": {
+        "0": 315,
+        "1": 58
+      },
+      "flags": {},
+      "order": 13,
+      "mode": 2,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 46,
+          "label": "图像"
+        }
+      ],
+      "properties": {},
+      "widgets_values": [
+        "ComfyUI"
+      ]
+    },
+    {
+      "id": 14,
+      "type": "SaveImage",
+      "pos": [
+        3218.7015515784988,
+        -23.82738275739061
+      ],
+      "size": {
+        "0": 555.5342407226562,
+        "1": 677.3679809570312
+      },
+      "flags": {},
+      "order": 16,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 23,
+          "label": "图像"
+        }
+      ],
+      "properties": {},
+      "widgets_values": [
+        "ComfyUI"
+      ]
+    },
+    {
+      "id": 19,
+      "type": "Hi_SDXL_Control2Img",
+      "pos": [
+        2763.7015515784988,
+        174.1726172426094
+      ],
+      "size": {
+        "0": 419.09814453125,
+        "1": 591.9691772460938
+      },
+      "flags": {},
+      "order": 15,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 32,
+          "label": "image"
+        },
+        {
+          "name": "control_image",
+          "type": "IMAGE",
+          "link": 33,
+          "label": "control_image"
+        },
+        {
+          "name": "repo_id",
+          "type": "STRING",
+          "link": 31,
+          "widget": {
+            "name": "repo_id"
+          },
+          "slot_index": 2,
+          "label": "repo_id"
+        },
+        {
+          "name": "controlnet_repo_id",
+          "type": "STRING",
+          "link": 30,
+          "widget": {
+            "name": "controlnet_repo_id"
+          },
+          "label": "controlnet_repo_id"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "output_image",
+          "type": "IMAGE",
+          "links": [
+            23
+          ],
+          "shape": 3,
+          "label": "output_image",
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "Hi_SDXL_Control2Img"
+      },
+      "widgets_values": [
+        "",
+        "",
+        "Lara Croft with brown hair, and is wearing a tank top, a brown backpack.The room is dark and has an old-fashioned decor with a patterned floor and a wallfeaturing a design with arches and a dark area on the right side, muted color, high detail, 8k high definition award winning",
+        "underexposed, poorly drawn hands, duplicate hands, overexposed,bad art, beginner, amateur, abstract, disfigured, deformed, close up, weird colors, watermark",
+        "Euler",
+        "Hyper-SDXL-1step-Unet.safetensors",
+        468685474214405,
+        "randomize",
+        4,
+        2,
+        1,
+        "img2img",
+        0.5,
+        0.99,
+        0,
+        1536,
+        2048
+      ]
+    },
+    {
+      "id": 21,
+      "type": "PreviewImage",
+      "pos": [
+        2773.7015515784988,
+        -178.8273827573906
+      ],
+      "size": [
+        398.4646666759136,
+        265.8611885106044
+      ],
+      "flags": {},
+      "order": 14,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 28,
+          "label": "图像"
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "PreviewImage"
+      }
+    },
+    {
+      "id": 13,
+      "type": "LoadImage",
+      "pos": [
+        2374.7015515784988,
+        -157.8273827573906
+      ],
+      "size": {
+        "0": 315,
+        "1": 314
+      },
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            26,
+            32
+          ],
+          "shape": 3,
+          "label": "图像",
+          "slot_index": 0
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null,
+          "shape": 3,
+          "label": "遮罩"
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "lara (1).jpeg",
+        "image"
+      ]
+    },
+    {
+      "id": 20,
+      "type": "OpenposePreprocessor",
+      "pos": [
+        2385.7015515784988,
+        216.1726172426094
+      ],
+      "size": {
+        "0": 315,
+        "1": 150
+      },
+      "flags": {},
+      "order": 11,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 26,
+          "label": "图像"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            28,
+            33
+          ],
+          "shape": 3,
+          "label": "图像",
+          "slot_index": 0
+        },
+        {
+          "name": "POSE_KEYPOINT",
+          "type": "POSE_KEYPOINT",
+          "links": null,
+          "shape": 3,
+          "label": "姿态关键点"
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "OpenposePreprocessor"
+      },
+      "widgets_values": [
+        "enable",
+        "enable",
+        "enable",
+        512
+      ]
+    },
+    {
+      "id": 22,
+      "type": "HI_Diffusers_Or_Repo",
+      "pos": [
+        2371.7015515784988,
+        606.1726172426091
+      ],
+      "size": {
+        "0": 315,
+        "1": 82
+      },
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "repo_id",
+          "type": "STRING",
+          "links": [
+            30
+          ],
+          "shape": 3,
+          "label": "repo_id",
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "HI_Diffusers_Or_Repo"
+      },
+      "widgets_values": [
+        "xinsir\\controlnet-openpose-sdxl-1.0",
+        ""
+      ]
+    },
+    {
+      "id": 10,
+      "type": "HI_Diffusers_Or_Repo",
+      "pos": [
+        2375.7015515784988,
+        455.1726172426092
+      ],
+      "size": {
+        "0": 315,
+        "1": 82
+      },
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "repo_id",
+          "type": "STRING",
+          "links": [
+            31
+          ],
+          "shape": 3,
+          "label": "repo_id",
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "HI_Diffusers_Or_Repo"
+      },
+      "widgets_values": [
+        "stabilityai\\stable-diffusion-xl-base-1.0",
+        ""
+      ]
+    }
+  ],
+  "links": [
+    [
+      23,
+      19,
+      0,
+      14,
+      0,
+      "IMAGE"
+    ],
+    [
+      26,
+      13,
+      0,
+      20,
+      0,
+      "IMAGE"
+    ],
+    [
+      28,
+      20,
+      0,
+      21,
+      0,
+      "IMAGE"
+    ],
+    [
+      30,
+      22,
+      0,
+      19,
+      3,
+      "STRING"
+    ],
+    [
+      31,
+      10,
+      0,
+      19,
+      2,
+      "STRING"
+    ],
+    [
+      32,
+      13,
+      0,
+      19,
+      0,
+      "IMAGE"
+    ],
+    [
+      33,
+      20,
+      0,
+      19,
+      1,
+      "IMAGE"
+    ],
+    [
+      34,
+      23,
+      0,
+      24,
+      0,
+      "STRING"
+    ],
+    [
+      35,
+      24,
+      0,
+      25,
+      0,
+      "IMAGE"
+    ],
+    [
+      38,
+      29,
+      0,
+      26,
+      0,
+      "IMAGE"
+    ],
+    [
+      39,
+      29,
+      0,
+      26,
+      1,
+      "IMAGE"
+    ],
+    [
+      40,
+      28,
+      0,
+      26,
+      2,
+      "STRING"
+    ],
+    [
+      41,
+      28,
+      0,
+      26,
+      3,
+      "STRING"
+    ],
+    [
+      42,
+      31,
+      0,
+      30,
+      0,
+      "IMAGE"
+    ],
+    [
+      43,
+      31,
+      0,
+      30,
+      1,
+      "IMAGE"
+    ],
+    [
+      44,
+      32,
+      0,
+      30,
+      2,
+      "STRING"
+    ],
+    [
+      45,
+      32,
+      0,
+      30,
+      3,
+      "STRING"
+    ],
+    [
+      46,
+      30,
+      0,
+      33,
+      0,
+      "IMAGE"
+    ]
+  ],
+  "groups": [
+    {
+      "title": "img2img",
+      "bounding": [
+        5155,
+        -297,
+        909,
+        828
+      ],
+      "color": "#3f789e",
+      "font_size": 24,
+      "locked": false
+    },
+    {
+      "title": "txt2img",
+      "bounding": [
+        3895,
+        -290,
+        1229,
+        1161
+      ],
+      "color": "#3f789e",
+      "font_size": 24,
+      "locked": false
+    },
+    {
+      "title": "controlnet",
+      "bounding": [
+        2334,
+        -290,
+        1522,
+        1109
+      ],
+      "color": "#3f789e",
+      "font_size": 24,
+      "locked": false
+    }
+  ],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.38554328942953203,
+      "offset": [
+        -629.5496363677084,
+        1303.6606153558178
+      ]
+    }
+  },
+  "version": 0.4
+}
