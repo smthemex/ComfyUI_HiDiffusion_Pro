@@ -210,14 +210,14 @@ class HI_Diffusers_Model_Loader:
                         unet = UNet2DConditionModel.from_pretrained(repo_id, subfolder="unet").to("cuda", torch.float16)
                         unet.load_state_dict(load_file(ckpt, device="cuda"), strict=False, )
                     if function_choice == "img2img":
-                        model = StableDiffusionXLControlNetImg2ImgPipeline.from_pretrained(repo_id, unet=unet, torch_dtype=torch.float16,
+                        model = StableDiffusionXLImg2ImgPipeline.from_pretrained(repo_id, unet=unet, torch_dtype=torch.float16,
                                                                           variant="fp16").to("cuda")
                     else:
                         model = StableDiffusionXLPipeline.from_pretrained(repo_id, unet=unet, torch_dtype=torch.float16,
                                                                           variant="fp16").to("cuda")
                 else:
                     if function_choice == "img2img":
-                        model = StableDiffusionXLControlNetImg2ImgPipeline.from_pretrained(repo_id,
+                        model = StableDiffusionXLImg2ImgPipeline.from_pretrained(repo_id,
                                                                           torch_dtype=torch.float16, variant="fp16").to(
                             "cuda")
                     else:
