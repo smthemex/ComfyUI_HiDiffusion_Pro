@@ -1,0 +1,305 @@
+{
+  "last_node_id": 37,
+  "last_link_id": 90,
+  "nodes": [
+    {
+      "id": 5,
+      "type": "SaveImage",
+      "pos": [
+        2049,
+        347
+      ],
+      "size": {
+        "0": 315,
+        "1": 270
+      },
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 88,
+          "label": "images"
+        }
+      ],
+      "properties": {},
+      "widgets_values": [
+        "ComfyUI"
+      ]
+    },
+    {
+      "id": 29,
+      "type": "ImageScale",
+      "pos": [
+        1217,
+        239
+      ],
+      "size": {
+        "0": 315,
+        "1": 130
+      },
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 63,
+          "label": "image"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            84,
+            90
+          ],
+          "shape": 3,
+          "label": "IMAGE",
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "ImageScale"
+      },
+      "widgets_values": [
+        "nearest-exact",
+        768,
+        1024,
+        "center"
+      ]
+    },
+    {
+      "id": 37,
+      "type": "Hi_Sampler",
+      "pos": [
+        1594,
+        294
+      ],
+      "size": {
+        "0": 416.36541748046875,
+        "1": 432.15875244140625
+      },
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 84,
+          "label": "image"
+        },
+        {
+          "name": "control_image",
+          "type": "IMAGE",
+          "link": 90,
+          "label": "control_image"
+        },
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 86,
+          "label": "model",
+          "slot_index": 2
+        },
+        {
+          "name": "model_info",
+          "type": "STRING",
+          "link": 87,
+          "widget": {
+            "name": "model_info"
+          },
+          "label": "model_info"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            88
+          ],
+          "shape": 3,
+          "label": "image",
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "Hi_Sampler"
+      },
+      "widgets_values": [
+        "",
+        "a girl,8k,smile,best quality",
+        "blurry, ugly, duplicate, poorly drawn face, deformed, mosaic, artifacts, bad limbs",
+        0.5,
+        0.8,
+        44315230705359,
+        "randomize",
+        12,
+        7.5,
+        1536,
+        2048
+      ]
+    },
+    {
+      "id": 9,
+      "type": "LoadImage",
+      "pos": [
+        833,
+        321
+      ],
+      "size": {
+        "0": 315,
+        "1": 314
+      },
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            63
+          ],
+          "shape": 3,
+          "label": "IMAGE",
+          "slot_index": 0
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null,
+          "shape": 3,
+          "label": "MASK"
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "woman-3584435_1280.jpg",
+        "image"
+      ]
+    },
+    {
+      "id": 7,
+      "type": "HI_Diffusers_Model_Loader",
+      "pos": [
+        1210,
+        502
+      ],
+      "size": {
+        "0": 332.68359375,
+        "1": 270
+      },
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "links": [
+            86
+          ],
+          "shape": 3,
+          "label": "model",
+          "slot_index": 0
+        },
+        {
+          "name": "model_info",
+          "type": "STRING",
+          "links": [
+            87
+          ],
+          "shape": 3,
+          "label": "model_info",
+          "slot_index": 1
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "HI_Diffusers_Model_Loader"
+      },
+      "widgets_values": [
+        "stabilityai\\stable-diffusion-xl-base-1.0",
+        "",
+        "sdxl_lightning_8step_unet.safetensors",
+        "none",
+        "",
+        "img2img",
+        "Euler",
+        "none",
+        "stonetoss"
+      ]
+    }
+  ],
+  "links": [
+    [
+      63,
+      9,
+      0,
+      29,
+      0,
+      "IMAGE"
+    ],
+    [
+      84,
+      29,
+      0,
+      37,
+      0,
+      "IMAGE"
+    ],
+    [
+      86,
+      7,
+      0,
+      37,
+      2,
+      "MODEL"
+    ],
+    [
+      87,
+      7,
+      1,
+      37,
+      3,
+      "STRING"
+    ],
+    [
+      88,
+      37,
+      0,
+      5,
+      0,
+      "IMAGE"
+    ],
+    [
+      90,
+      29,
+      0,
+      37,
+      1,
+      "IMAGE"
+    ]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 1.1,
+      "offset": [
+        -585.1069134732056,
+        71.60039920395064
+      ]
+    }
+  },
+  "version": 0.4
+}
