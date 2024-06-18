@@ -361,7 +361,7 @@ class Hi_Sampler:
         # control_image = np.transpose(control_image, (
         #         #     0, 3, 1, 2))  # 将comfy输入的（batch_size,channels,rows,cols）改成条件需求的（3通道，16输出，3，1 ，pading=1）
         model_type, unet_model, control_net, function_choice,lora= model_info.split(";")
-        print(model_type, unet_model, control_net, function_choice)
+        #print(model_type, unet_model, control_net, function_choice)
         if control_net == "none":
             if unet_model in lcm_unet:
                 if function_choice == "img2img":
