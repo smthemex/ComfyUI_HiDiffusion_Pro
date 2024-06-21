@@ -10,17 +10,17 @@ from diffusers import (StableDiffusionXLPipeline, DiffusionPipeline, DDIMSchedul
                        KDPM2AncestralDiscreteScheduler, LMSDiscreteScheduler,
                        AutoPipelineForInpainting, DPMSolverMultistepScheduler, DPMSolverSinglestepScheduler,
                        EulerDiscreteScheduler, HeunDiscreteScheduler, UNet2DConditionModel,
-                       StableDiffusionXLImg2ImgPipeline,
+                       StableDiffusionXLImg2ImgPipeline,AutoPipelineForImage2Image,
                        AutoPipelineForText2Image, StableDiffusionXLControlNetImg2ImgPipeline, KDPM2DiscreteScheduler,
                        EulerAncestralDiscreteScheduler, UniPCMultistepScheduler, AutoencoderKL,
                        StableDiffusionXLControlNetPipeline, DDPMScheduler, TCDScheduler, LCMScheduler,
                        StableDiffusionPipeline, StableDiffusionControlNetPipeline)
-
 from .hidiffusion.hidiffusion import apply_hidiffusion
 import folder_paths
 from safetensors.torch import load_file, load
 import yaml
 import diffusers
+
 
 dif_version = str(diffusers.__version__)
 dif_version_int = int(dif_version.split(".")[1])
@@ -53,10 +53,9 @@ if paths != [] or paths_a != []:
 else:
     paths = ["none", ]
 
-scheduler_list = [
+scheduler_list = ["DDIM",
     "Euler",
     "Euler a",
-    "DDIM",
     "DDPM",
     "DPM++ 2M",
     "DPM++ 2M Karras",
@@ -82,6 +81,8 @@ normal_model_list = datas["surport_model"]
 sdxl_lightning_list = datas["lightning_unet"]
 controlnet_suport = datas["surport_controlnet"]
 xl_model_support = datas["sdxl_model"]
+lightning_lora=datas["lightning_lora"]
+lightning_xl_lora=datas["lightning_xl_lora"]
 
 lcm_unet = ["dmd2_sdxl_4step_unet_fp16.bin", "dmd2_sdxl_1step_unet_fp16.bin", "lcm-sdxl-base-1.0.safetensors",
             "Hyper-SDXL-1step-Unet.safetensors"]
@@ -131,7 +132,7 @@ def get_sheduler(name):
 
 
 def tensor_to_image(tensor):
-    tensor = tensor.cpu()
+    #tensor = tensor.cpu()
     image_np = tensor.squeeze().mul(255).clamp(0, 255).byte().numpy()
     image = Image.fromarray(image_np, mode='RGB')
     return image
@@ -175,22 +176,24 @@ class HI_Diffusers_Model_Loader:
                 "unet_model": (["none"] + folder_paths.get_filename_list("unet"),),
                 "controlnet_local_model": (paths,),
                 "controlnet_repo_id": ("STRING", {"default": "diffusers/controlnet-canny-sdxl-1.0"}),
-                "function_choice": (["text2img", "img2img", ],),
+                "function_choice": (["txt2img", "img2img", ],),
                 "scheduler": (scheduler_list,),
                 "lora": (["none"] + folder_paths.get_filename_list("loras"),),
+                "lora_scale": ("FLOAT", {"default": 0.8, "min": 0.1, "max": 1.0, "step": 0.1}),
                 "trigger_words": ("STRING", {"default": "best quality"}),
             }
         }
 
-    RETURN_TYPES = ("MODEL", "STRING")
-    RETURN_NAMES = ("model", "model_info")
+    RETURN_TYPES = ("IMAGE","MODEL", "STRING",)
+    RETURN_NAMES = ("image","model", "model_info",)
     FUNCTION = "loader_models"
     CATEGORY = "Hidiffusion_Pro"
 
     def loader_models(self, local_model_path, repo_id, unet_model, controlnet_local_model, controlnet_repo_id,
-                      function_choice,scheduler,lora,trigger_words):
+                      function_choice,scheduler,lora,lora_scale,trigger_words):
         repo_id = instance_path(local_model_path, repo_id)
         controlnet_repo_id = instance_path(controlnet_local_model, controlnet_repo_id)
+        scheduler_used = get_sheduler(scheduler)
         if repo_id == "none":
             raise "need repo_id or model path"
         model_type = repo_id.rsplit("/")[-1]
@@ -226,11 +229,21 @@ class HI_Diffusers_Model_Loader:
                             "cuda")
 
             elif model_type == "sdxl-turbo":
-                model = AutoPipelineForText2Image.from_pretrained(repo_id, torch_dtype=torch.float16,
-                                                                  variant="fp16").to('cuda')
+                if function_choice == "img2img":
+                    model = AutoPipelineForImage2Image.from_pretrained(repo_id, torch_dtype=torch.float16,
+                                                                      variant="fp16").to('cuda')
+                else:
+                    model = AutoPipelineForText2Image.from_pretrained(repo_id, torch_dtype=torch.float16,
+                                                                      variant="fp16").to('cuda')
             elif model_type in normal_model_list:
-                model = DiffusionPipeline.from_pretrained(repo_id,
-                                                          torch_dtype=torch.float16, variant="fp16").to("cuda")
+                if model_type=="Ghibli-Diffusion":
+                    model = StableDiffusionPipeline.from_pretrained(repo_id,
+                                                              torch_dtype=torch.float16, variant="fp16").to("cuda")
+                else:
+                    model = DiffusionPipeline.from_pretrained(repo_id,
+                                                                    torch_dtype=torch.float16, variant="fp16").to(
+                        "cuda")
+
             else:
                 raise "Unsupported model_path or repo_id"
         else:
@@ -282,30 +295,18 @@ class HI_Diffusers_Model_Loader:
             elif model_type == "sdxl-turbo":
                 model = StableDiffusionXLControlNetPipeline.from_pretrained(repo_id, controlnet=controlnet,
                                                                             torch_dtype=torch.float16,
-                                                                            variant="fp16").to('cuda')
+                                                                          variant="fp16").to('cuda')
             else:
                 raise "only support SDXL controlnet"
-        scheduler_used = get_sheduler(scheduler)
-        if model_type in xl_model_support:
-            if unet_model in sdxl_lightning_list:
-                if unet_model in lcm_unet:
-                    model.scheduler = LCMScheduler.from_config(model.scheduler.config, timestep_spacing="trailing")
-                else:
-                    model.scheduler = scheduler_used.from_config(model.scheduler.config,
-                                                                 timestep_spacing="trailing")
-            else:
-                model.scheduler = scheduler_used.from_config(model.scheduler.config, timestep_spacing="trailing")
-        elif model_type == "sdxl-turbo":
-            pass
-        elif model_type in normal_model_list:
-            model.scheduler = scheduler_used.from_config(model.scheduler.config, timestep_spacing="trailing")
-
+        model.scheduler = scheduler_used.from_config(model.scheduler.config, timestep_spacing="trailing")
         if lora!="none":
             lora_path = folder_paths.get_full_path("loras", lora)
-            lora = get_instance_path(lora_path)
-            model.load_lora_weights(lora, adapter_name=trigger_words)
-            model.set_adapters(trigger_words)
-            model.fuse_lora()
+            lora_path = get_instance_path(lora_path)
+            # if lora in lightning_lora or lora in lightning_xl_lora:
+            #     model.load_lora_weights(lora_path)
+            #     model.fuse_lora()
+            model.load_lora_weights(lora_path, adapter_name=trigger_words)
+            model.fuse_lora(lora_scale=lora_scale, adapter_names=[trigger_words,])
 
         # Optional. enable_xformers_memory_efficient_attention can save memory usage and increase inference
         # speed. enable_model_cpu_offload and enable_vae_tiling can save memory usage.
@@ -315,8 +316,9 @@ class HI_Diffusers_Model_Loader:
         model.enable_model_cpu_offload()
         model.enable_vae_tiling()
 
-        model_info = str(";".join([model_type, unet_model, control_model_type, function_choice,lora]))
-        return (model, model_info)
+        model_info = str(";".join([model_type, unet_model, control_model_type, function_choice,lora,trigger_words]))
+        image= Image.new('RGB', (512,512), (255, 255, 255))
+        return (image,model, model_info,)
 
 
 class Hi_Sampler:
@@ -356,77 +358,57 @@ class Hi_Sampler:
     def hi_sampler(self, image, control_image, model, model_info, prompt, negative_prompt,  controlnet_scale,clip_skip,
                    seed,
                    steps, cfg,  width,height,):
-        image = tensor_to_image(image)
-        control_image = tensor_to_image(control_image)
+        model_type, unet_model, control_net, function_choice, lora, trigger_words = model_info.split(";")
+
+        if function_choice == "txt2img":
+            if control_net == "none":
+                pass
+            else:
+                control_image = tensor_to_image(control_image)
+        else:
+            image = tensor_to_image(image)
+            control_image = tensor_to_image(control_image)
         # control_image = np.transpose(control_image, (
         #         #     0, 3, 1, 2))  # 将comfy输入的（batch_size,channels,rows,cols）改成条件需求的（3通道，16输出，3，1 ，pading=1）
-        model_type, unet_model, control_net, function_choice,lora= model_info.split(";")
+
+        if lora!="none":
+            prompt = prompt + " " + trigger_words
         #print(model_type, unet_model, control_net, function_choice)
         if control_net == "none":
-            if unet_model in lcm_unet:
-                if function_choice == "img2img":
-                    image = \
-                        model(prompt, negative_prompt=negative_prompt, image=image, num_inference_steps=steps,
-                              guidance_scale=cfg,clip_skip=clip_skip,
-                              height=height, width=width, seed=seed, ).images[0]
-                else:
-                    image = \
-                        model(prompt, negative_prompt=negative_prompt, num_inference_steps=steps,
-                              guidance_scale=cfg,clip_skip=clip_skip,
-                              height=height, width=width, seed=seed, ).images[0]
+            if function_choice == "img2img":
+                image = \
+                    model(prompt, negative_prompt=negative_prompt, image=image, num_inference_steps=steps,
+                          guidance_scale=cfg, clip_skip=clip_skip,
+                          height=height, width=width, seed=seed, ).images[0]
             else:
-                if function_choice == "img2img":
-                    image = \
-                        model(prompt, negative_prompt=negative_prompt, image=image, num_inference_steps=steps,
-                              guidance_scale=cfg,clip_skip=clip_skip,
-                              height=height, width=width, seed=seed, ).images[0]
-                else:
-                    image = \
-                        model(prompt, negative_prompt=negative_prompt, num_inference_steps=steps,
-                              guidance_scale=cfg,clip_skip=clip_skip,
-                              height=height, width=width, seed=seed, ).images[0]
+                image = \
+                    model(prompt, negative_prompt=negative_prompt, num_inference_steps=steps,
+                          guidance_scale=cfg, clip_skip=clip_skip,
+                          height=height, width=width, seed=seed, ).images[0]
         else:
-            if unet_model in lcm_unet:
-                if function_choice == "img2img":
-                    if control_net == "stable-diffusion-xl-1.0-inpainting-0.1":
-                        image = \
-                            model(prompt, negative_prompt=negative_prompt, image=image, mask_image=control_image,
-                                  num_inference_steps=steps, guidance_scale=cfg, height=height,clip_skip=clip_skip,
-                                  width=width, controlnet_conditioning_scale=controlnet_scale,
-                                  seed=seed, ).images[0]
-                    else:
-                        image = \
-                            model(prompt, negative_prompt=negative_prompt, image=image, control_image=control_image,
-                                  num_inference_steps=steps, guidance_scale=cfg, height=height,clip_skip=clip_skip,
-                                  width=width, controlnet_conditioning_scale=controlnet_scale,
-                                  seed=seed, ).images[0]
-
+            if function_choice == "img2img":
+                if control_net == "stable-diffusion-xl-1.0-inpainting-0.1":
+                    image = \
+                        model(prompt, negative_prompt=negative_prompt, image=image, mask_image=control_image,
+                              num_inference_steps=steps, guidance_scale=cfg, height=height, clip_skip=clip_skip,
+                              width=width, controlnet_conditioning_scale=controlnet_scale,
+                              seed=seed, ).images[0]
                 else:
-                    image = model(prompt, negative_prompt=negative_prompt, image=control_image,
-                                  num_inference_steps=steps, guidance_scale=cfg, height=height,clip_skip=clip_skip,
-                                  width=width, controlnet_conditioning_scale=controlnet_scale,
-                                  seed=seed, ).images[0]
+                    image = \
+                        model(prompt, negative_prompt=negative_prompt, image=image, control_image=control_image,
+                              num_inference_steps=steps, guidance_scale=cfg, height=height, width=width,
+                              clip_skip=clip_skip,
+                              controlnet_conditioning_scale=controlnet_scale,
+                              seed=seed, ).images[0]
             else:
-                if function_choice == "img2img":
-                    if control_net == "stable-diffusion-xl-1.0-inpainting-0.1":
-                        image = \
-                            model(prompt, negative_prompt=negative_prompt, image=image, mask_image=control_image,
-                                  num_inference_steps=steps, guidance_scale=cfg, height=height,clip_skip=clip_skip,
-                                  width=width, controlnet_conditioning_scale=controlnet_scale,
-                                  seed=seed, ).images[0]
-                    else:
-                        image = \
-                            model(prompt, negative_prompt=negative_prompt, image=image, control_image=control_image,
-                                  num_inference_steps=steps, guidance_scale=cfg, height=height, width=width,clip_skip=clip_skip,
-                                  controlnet_conditioning_scale=controlnet_scale,
-                                  seed=seed, ).images[0]
-                else:
-                    image = model(prompt, negative_prompt=negative_prompt, image=control_image,
-                                  num_inference_steps=steps, guidance_scale=cfg, height=height, width=width,clip_skip=clip_skip,
-                                  controlnet_conditioning_scale=controlnet_scale,
-                                  seed=seed, ).images[0]
+                image = model(prompt, negative_prompt=negative_prompt, image=control_image,
+                              num_inference_steps=steps, guidance_scale=cfg, height=height, width=width,
+                              clip_skip=clip_skip,
+                              controlnet_conditioning_scale=controlnet_scale,
+                              seed=seed, ).images[0]
 
         output_image = torch.from_numpy(np.array(image).astype(np.float32) / 255.0).unsqueeze(0)
+        model.unfuse_lora()
         del model
         return (output_image,)
 
