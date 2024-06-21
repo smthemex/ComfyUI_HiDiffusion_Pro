@@ -22,4 +22,42 @@ surport_controlnet:
 sdxl_model:
       - stable-diffusion-xl-base-1.0                 #repo    stabilityai/stable-diffusion-xl-base-1.0
       - sdxl-flash                                   #repo    sd-community/sdxl-flash
+lightning_lora:
+      - Hyper-SD15-12steps-CFG-lora.safetensors
+      - Hyper-SD15-1step-lora.safetensors
+      - Hyper-SD15-2steps-lora.safetensors
+      - Hyper-SD15-4steps-lora.safetensors
+      - Hyper-SD15-8steps-CFG-lora.safetensors
+      - Hyper-SD15-8steps-lora.safetensors
+      - pcm_sd15_lcmlike_lora_converted.safetensors
+      - pcm_sd15_normalcfg_16step_converted.safetensors
+      - pcm_sd15_normalcfg_4step_converted.safetensors
+      - pcm_sd15_smallcfg_16step_converted.safetensor
+      - pcm_sd15_smallcfg_2step_converted.safetensors
+      - pcm_sd15_smallcfg_4step_converted.safetensors
+      - pcm_sd15_smallcfg_8step_converted.safetensors
+      - lcm-lora-sdv1-5.safetensors
+      - TCD-SD15-LoRA.safetensors            #need rename and TCD
+lightning_xl_lora:
+      - Hyper-SDXL-12steps-CFG-lora.safetensors
+      - Hyper-SDXL-1step-lora.safetensors
+      - Hyper-SDXL-2step-lora.safetensors
+      - Hyper-SDXL-4step-lora.safetensors
+      - Hyper-SDXL-8step-lora.safetensors
+      - Hyper-SDXL-8steps-CFG-lora.safetensors
+      - sdxl_lightning_2step_lora.safetensors
+      - sdxl_lightning_4step_lora.safetensors
+      - sdxl_lightning_8step_lora.safetensors
+      - pcm_sdxl_lcmlike_lora_converted.safetensors
+      - pcm_sdxl_normalcfg_16step_converted.safetensors
+      - pcm_sdxl_normalcfg_4step_converted.safetensors
+      - pcm_sdxl_normalcfg_8step_converted.safetensors
+      - pcm_sdxl_smallcfg_16step_converted.safetensors
+      - pcm_sdxl_smallcfg_2step_converted.safetensors
+      - pcm_sdxl_smallcfg_4step_converted.safetensors
+      - pcm_sdxl_smallcfg_8step_converted.safetensors
+      - lcm-lora-sdxl.safetensors
+      - dmd2_sdxl_4step_lora.safetensors
+      - dmd2_sdxl_4step_lora_fp16.safetensors
+      - TCD-SDXL-LoRA.safetensors                         #need rename and TCD
 
