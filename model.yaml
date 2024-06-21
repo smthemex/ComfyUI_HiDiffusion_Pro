@@ -10,7 +10,6 @@ lightning_unet:
 surport_model:                                                        
       - stable-diffusion-v1-5                        #repo    runwayml/stable-diffusion-v1-5
       - stable-diffusion-2-1-base                    #repo    stabilityai/stable-diffusion-2-1-base
-      - playground-v2.5-1024px-aesthetic             #repo    playgroundai/playground-v2.5-1024px-aesthetic
       - playground-v2-1024px-aesthetic               #repo    playgroundai/playground-v2-1024px-aesthetic
       - Ghibli-Diffusion                             #repo    nitrosocke/Ghibli-Diffusion
 surport_controlnet:
