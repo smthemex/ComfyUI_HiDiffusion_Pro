@@ -6,8 +6,8 @@ HiDiffusion  From: [link](https://github.com/megvii-research/HiDiffusion)
 
 Update 
 ----
-增加Lora的参数调节，出点给了个空图像，免得多拉一个节点。  
-add lora_scale, and add a empty img to use txt2img.    
+修复节点连接逻辑，现在文生图模式，无需接入image，无controlnet也无需接入control_image   
+Fix node connection logic, now in text-based graphics mode, there is no need to connect to image, no controllnet, and no need to connect to controll_image   
 
 My ComfyUI node list：
 -----
@@ -26,24 +26,20 @@ My ComfyUI node list：
 12、PBR_Maker node:[ComfyUI_PBR_Maker](https://github.com/smthemex/ComfyUI_PBR_Maker)   
 
 Notice（节点的特殊功能说明 Special Function Description of Nodes）  
------
---优化了节点，现在只有采样器和模型加载2个节点，优化了模型加载流程；     
+-----    
+
 --支持SDXL-lighting\Hyper\LCM\DMD2\的加速Unet，建议适当提高步数；    
 --基于官方的更新，加入lora支持，需要填关键词；    
 --加入skip，去掉意义不大的其他参数；    
---支持所有的SDXL controlnet模型（须配置config文件）；         
---你可以修改model.yaml文件，添加其他的可能支持“扩散模型”或者“controlnet”或者“unet”模型；          
---所有节点都支持XL-lighting\Hyper\LCM\DMD2\ Unet加速，建议适当提高步数；        
---支持大部分的基于SDXL的扩散模型.    
+--支持所有的SDXL controlnet模型（仅支持配置config文件的diffuser加载模式）；         
+--你可以修改model.yaml文件，添加其他的可能支持SDXL“扩散模型”或者“controlnet”或者SDXL“unet”模型；                 
 
---Optimized the nodes, now there are only two nodes: sampler and model loading, and the model loading process has been optimized;    
---Supports acceleration Unet for SDXL lighting \ Hyper \ LCM \ DMD2 \, it is recommended to increase the number of steps appropriately;    
---Support Lora, keywords need to be filled in;    
---Add skip and remove irrelevant parameters;   
---Supports all SDXL controllnet models (requires configuration of config file);     
---You can modify the model.yaml file and add other models that may support "diffusion models", "controllnet", or "unet";    
---All nodes support XL lighting, Hyper, LCM, DMD2, Unet acceleration, it is recommended to increase the number of steps appropriately ;    
---Supports most SDXL based diffusion models.
+
+--Support acceleration Unet for SDXL lighting, Hyper, LCM, and DMD2. It is recommended to increase the number of steps appropriately;   
+--Based on official updates, adding support for Lora requires filling in keywords;   
+--Add skip and remove other parameters that are not significant;   
+--Supports all SDXL controllnet models (only supports diffuser loading mode for configuring config files);   
+--You can modify the model.yaml file and add other models that may support SDXL "diffusion models" or "controllnet" or SDXL "unet" models;   
 
 
 1.Installation
@@ -83,17 +79,21 @@ For partially supported models, please refer to the model.yaml file
 
 5 example
 -----
-use controlnet and lora      
-![](https://github.com/smthemex/ComfyUI_HiDiffusion_Pro/blob/main/example/lora.png)
+img2img use controlnet and lora     图生图加controlnet和lora   
+![](https://github.com/smthemex/ComfyUI_HiDiffusion_Pro/blob/main/example/img2imgcontrolnetlora.png)
 
-use inpainting XL model  
+use inpainting XL model  内绘  
 ![](https://github.com/smthemex/ComfyUI_HiDiffusion_Pro/blob/main/example/inpainting.png)
 
-txt2img  use XL/sd1.5/XL turbo/background...   
-![](https://github.com/smthemex/ComfyUI_HiDiffusion_Pro/blob/main/example/text2img.png)
- 
-img2img  use XL XL-flash or base XL
-![](https://github.com/smthemex/ComfyUI_HiDiffusion_Pro/blob/main/example/linghting%20unet.png)
+txt2img  use XL/sd1.5/XL turbo/background...    文生图   
+![](https://github.com/smthemex/ComfyUI_HiDiffusion_Pro/blob/main/example/txt2img.png)
+
+txt2img + controlnet  文生图加controlnet  .     
+![](https://github.com/smthemex/ComfyUI_HiDiffusion_Pro/blob/main/example/txt2imgcontrolnet.png
+ )
+
+img2img  use Hyper unet   图生图加加速unet   
+![](https://github.com/smthemex/ComfyUI_HiDiffusion_Pro/blob/main/example/img2imgunet.png)
 
 6 Citation
 ------
