@@ -184,13 +184,13 @@ class HI_Diffusers_Model_Loader:
             }
         }
 
-    RETURN_TYPES = ("IMAGE","MODEL", "STRING",)
-    RETURN_NAMES = ("image","model", "model_info",)
+    RETURN_TYPES = ("MODEL", "STRING",)
+    RETURN_NAMES = ("model", "model_info",)
     FUNCTION = "loader_models"
     CATEGORY = "Hidiffusion_Pro"
 
     def loader_models(self, local_model_path, repo_id, unet_model, controlnet_local_model, controlnet_repo_id,
-                      function_choice,scheduler,lora,lora_scale,trigger_words):
+                      function_choice,scheduler,lora,lora_scale,trigger_words,):
         repo_id = instance_path(local_model_path, repo_id)
         controlnet_repo_id = instance_path(controlnet_local_model, controlnet_repo_id)
         scheduler_used = get_sheduler(scheduler)
@@ -249,7 +249,7 @@ class HI_Diffusers_Model_Loader:
         else:
             if control_model_type != "stable-diffusion-xl-1.0-inpainting-0.1":
                 controlnet = ControlNetModel.from_pretrained(controlnet_repo_id, torch_dtype=torch.float16,
-                                                            variant="fp16").to("cuda")
+                                          variant="fp16").to("cuda")
             else:
                 controlnet=""
             if model_type in xl_model_support:
@@ -317,8 +317,8 @@ class HI_Diffusers_Model_Loader:
         model.enable_vae_tiling()
 
         model_info = str(";".join([model_type, unet_model, control_model_type, function_choice,lora,trigger_words]))
-        image= Image.new('RGB', (512,512), (255, 255, 255))
-        return (image,model, model_info,)
+
+        return (model, model_info,)
 
 
 class Hi_Sampler:
@@ -329,8 +329,6 @@ class Hi_Sampler:
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "image": ("IMAGE",),
-                "control_image": ("IMAGE",),
                 "model": ("MODEL",),
                 "model_info": ("STRING", {"forceInput": True}),
                 "prompt": ("STRING", {"multiline": True,
@@ -346,8 +344,9 @@ class Hi_Sampler:
                 "cfg": ("FLOAT", {"default": 7.5, "min": 0.0, "max": 100.0, "step": 0.1, "round": 0.01}),
                 "width": ("INT", {"default": 2048, "min": 64, "max": 8192, "step": 64, "display": "number"}),
                 "height": ("INT", {"default": 2048, "min": 64, "max": 8192, "step": 64, "display": "number"}),
-
-            }
+            },
+            "optional": {"image": ("IMAGE",),
+                "control_image": ("IMAGE",)}
         }
 
     RETURN_TYPES = ("IMAGE",)
@@ -355,27 +354,18 @@ class Hi_Sampler:
     FUNCTION = "hi_sampler"
     CATEGORY = "Hidiffusion_Pro"
 
-    def hi_sampler(self, image, control_image, model, model_info, prompt, negative_prompt,  controlnet_scale,clip_skip,
-                   seed,
-                   steps, cfg,  width,height,):
+    def hi_sampler(self, model, model_info, prompt, negative_prompt,  controlnet_scale,clip_skip,
+                   seed,steps, cfg,  width,height,**kwargs):
         model_type, unet_model, control_net, function_choice, lora, trigger_words = model_info.split(";")
-
-        if function_choice == "txt2img":
-            if control_net == "none":
-                pass
-            else:
-                control_image = tensor_to_image(control_image)
-        else:
-            image = tensor_to_image(image)
-            control_image = tensor_to_image(control_image)
         # control_image = np.transpose(control_image, (
         #         #     0, 3, 1, 2))  # 将comfy输入的（batch_size,channels,rows,cols）改成条件需求的（3通道，16输出，3，1 ，pading=1）
-
         if lora!="none":
             prompt = prompt + " " + trigger_words
         #print(model_type, unet_model, control_net, function_choice)
         if control_net == "none":
             if function_choice == "img2img":
+                image = kwargs["image"]
+                image = tensor_to_image(image)
                 image = \
                     model(prompt, negative_prompt=negative_prompt, image=image, num_inference_steps=steps,
                           guidance_scale=cfg, clip_skip=clip_skip,
@@ -386,7 +376,11 @@ class Hi_Sampler:
                           guidance_scale=cfg, clip_skip=clip_skip,
                           height=height, width=width, seed=seed, ).images[0]
         else:
+            control_image = kwargs["control_image"]
+            control_image = tensor_to_image(control_image)
             if function_choice == "img2img":
+                image = kwargs["image"]
+                image = tensor_to_image(image)
                 if control_net == "stable-diffusion-xl-1.0-inpainting-0.1":
                     image = \
                         model(prompt, negative_prompt=negative_prompt, image=image, mask_image=control_image,
@@ -394,8 +388,7 @@ class Hi_Sampler:
                               width=width, controlnet_conditioning_scale=controlnet_scale,
                               seed=seed, ).images[0]
                 else:
-                    image = \
-                        model(prompt, negative_prompt=negative_prompt, image=image, control_image=control_image,
+                    image = model(prompt, negative_prompt=negative_prompt, image=image, control_image=control_image,
                               num_inference_steps=steps, guidance_scale=cfg, height=height, width=width,
                               clip_skip=clip_skip,
                               controlnet_conditioning_scale=controlnet_scale,
