@@ -6,8 +6,10 @@ HiDiffusion  From: [link](https://github.com/megvii-research/HiDiffusion)
 
 Update 
 ----
-修复节点连接逻辑，现在文生图模式，无需接入image，无controlnet也无需接入control_image   
-Fix node connection logic, now in text-based graphics mode, there is no need to connect to image, no controllnet, and no need to connect to controll_image   
+-- 加入controlnet-tile-sdxl的支持，内置图片预处理，默认512尺寸，新增apply_window_attn 条件控制。  
+--修复节点连接逻辑，现在文生图模式，无需接入image，无controlnet也无需接入control_image   
+----Added support for control net file sdxl, built-in image preprocessing, default size of 512, and added condition control for apply_window_attn.   
+--Fix node connection logic, now in text-based graphics mode, there is no need to connect to image, no controllnet, and no need to connect to controll_image   
 
 My ComfyUI node list：
 -----
@@ -64,6 +66,29 @@ yaml
   一种是，把你下载好的模型放在comfyUI的"models/diffusers"路径下，记得不要改最尾的模型路径名“比如stable-diffusion-xl-base-1.0”，就可以用菜单直接调用。（注意：要用菜单的方式，必须删掉repo_id默认的"stabilityai/stable-diffusion-xl-base-1.0"，让repo_id留空，controlnet_id一样，要调用菜单，必须留空controlnet_id） 
   
   一种是，你在repo_id或controlnet_id直接填写诸如“x:/xx/xx/stabilityai/stable-diffusion-xl-base-1.0” 这样的已经下载好的扩散模型的绝对路径也能用
+
+controlnet模型存放示例：
+```
+├── ComfyUI/models/diffusers/   
+|     ├──xinsir/controlnet-openpose-sdxl-1.0    
+|         ├── config.json   
+|         ├── diffusion_pytorch_model.fp16.safetensors   
+|     ├──xinsir/controlnet-scribble-sdxl-1.0   
+|         ├── config.json   
+|         ├── diffusion_pytorch_model.fp16.safetensors
+|     ├──xinsir/controlnet-tile-sdxl-1.0  
+|         ├── config.json   
+|         ├── diffusion_pytorch_model.fp16.safetensors  
+|     ├──diffusers/controlnet-canny-sdxl-1.0   
+|         ├── config.json   
+|         ├── diffusion_pytorch_model.fp16.safetensors   
+|     ├──diffusers/controlnet-depth-sdxl-1.0   
+|         ├── config.json   
+|         ├── diffusion_pytorch_model.fp16.safetensors
+|     ├──TheMistoAI/MistoLine 
+|         ├── config.json   
+|         ├── diffusion_pytorch_model.fp16.safetensors
+```
   
   Three methods for calling model nodes   
   Filling in the corresponding repo_id will download the model   
