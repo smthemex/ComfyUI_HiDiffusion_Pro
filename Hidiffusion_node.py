@@ -20,7 +20,7 @@ import folder_paths
 from safetensors.torch import load_file, load
 import yaml
 import diffusers
-
+import random
 
 dif_version = str(diffusers.__version__)
 dif_version_int = int(dif_version.split(".")[1])
@@ -28,7 +28,8 @@ if dif_version_int >= 28:
     from diffusers.models.unets.unet_2d_condition import UNet2DConditionModel
 else:
     from diffusers.models.unet_2d_condition import UNet2DConditionModel
-
+from comfy.utils import common_upscale
+from .guided_filter import FastGuidedFilter
 dir_path = os.path.dirname(os.path.abspath(__file__))
 path_dir = os.path.dirname(dir_path)
 file_path = os.path.dirname(path_dir)
@@ -46,7 +47,8 @@ for search_path in folder_paths.get_folder_paths("diffusers"):
                            + [p for p in paths_a if "MistoLine" in p]
                            + [o for o in paths_a if "lcm-sdxl" in o]
                            + [Q for Q in paths_a if "controlnet-openpose-sdxl-1.0" in Q]
-                           + [Z for Z in paths_a if "controlnet-scribble-sdxl-1.0" in Z])
+                           + [Z for Z in paths_a if "controlnet-scribble-sdxl-1.0" in Z]
+                           +[x for x in paths_a if "controlnet-tile-sdxl-1.0" in x])
 
 if paths != [] or paths_a != []:
     paths = ["none"] + [x for x in paths if x] + [y for y in paths_a if y]
@@ -87,6 +89,48 @@ lightning_xl_lora=datas["lightning_xl_lora"]
 lcm_unet = ["dmd2_sdxl_4step_unet_fp16.bin", "dmd2_sdxl_1step_unet_fp16.bin", "lcm-sdxl-base-1.0.safetensors",
             "Hyper-SDXL-1step-Unet.safetensors"]
 
+def tensor_to_image(tensor):
+    #tensor = tensor.cpu()
+    image_np = tensor.squeeze().mul(255).clamp(0, 255).byte().numpy()
+    image = Image.fromarray(image_np, mode='RGB')
+    return image
+
+def nomarl_upscale(img_tensor, width, height):
+    samples = img_tensor.movedim(-1, 1)
+    img = common_upscale(samples, width, height, "nearest-exact", "center")
+    samples = img.movedim(1, -1)
+    img_pil = tensor_to_image(samples)
+    return img_pil
+
+def resize_image_control(control_image, resolution):
+    HH, WW, _ = control_image.shape
+    crop_h = random.randint(0, HH - resolution[1])
+    crop_w = random.randint(0, WW - resolution[0])
+    crop_image = control_image[crop_h:crop_h+resolution[1], crop_w:crop_w+resolution[0], :]
+    return crop_image, crop_w, crop_h
+
+def apply_gaussian_blur(image_np, ksize=5, sigmaX=1.0):
+    if ksize % 2 == 0:
+        ksize += 1  # ksize must be odd
+    blurred_image = cv2.GaussianBlur(image_np, (ksize, ksize), sigmaX=sigmaX)
+    return blurred_image
+
+def apply_guided_filter(image_np, radius, eps, scale):
+    filter = FastGuidedFilter(image_np, radius, eps, scale)
+    return filter.filter(image_np)
+
+def input_size_adaptation_output(img_tensor,base_in, width, height):
+    #basein=1024
+    if width == height:
+        img_pil = nomarl_upscale(img_tensor, base_in, base_in)  # 2pil
+    else:
+        if min(1,width/ height)==1: #高
+            r=height/base_in
+            img_pil = nomarl_upscale(img_tensor, round(width/r), base_in)  # 2pil
+        else: #宽
+            r=width/base_in
+            img_pil = nomarl_upscale(img_tensor, base_in, round(height/r))  # 2pil
+    return img_pil
 
 def get_sheduler(name):
     scheduler = False
@@ -129,13 +173,6 @@ def get_sheduler(name):
     elif name == "UniPC":
         scheduler = UniPCMultistepScheduler()
     return scheduler
-
-
-def tensor_to_image(tensor):
-    #tensor = tensor.cpu()
-    image_np = tensor.squeeze().mul(255).clamp(0, 255).byte().numpy()
-    image = Image.fromarray(image_np, mode='RGB')
-    return image
 
 
 def get_local_path(file_path, model_path):
@@ -181,6 +218,7 @@ class HI_Diffusers_Model_Loader:
                 "lora": (["none"] + folder_paths.get_filename_list("loras"),),
                 "lora_scale": ("FLOAT", {"default": 0.8, "min": 0.1, "max": 1.0, "step": 0.1}),
                 "trigger_words": ("STRING", {"default": "best quality"}),
+                "apply_window_attn":("BOOLEAN", {"default": False},)
             }
         }
 
@@ -190,7 +228,7 @@ class HI_Diffusers_Model_Loader:
     CATEGORY = "Hidiffusion_Pro"
 
     def loader_models(self, local_model_path, repo_id, unet_model, controlnet_local_model, controlnet_repo_id,
-                      function_choice,scheduler,lora,lora_scale,trigger_words,):
+                      function_choice,scheduler,lora,lora_scale,trigger_words,apply_window_attn):
         repo_id = instance_path(local_model_path, repo_id)
         controlnet_repo_id = instance_path(controlnet_local_model, controlnet_repo_id)
         scheduler_used = get_sheduler(scheduler)
@@ -246,7 +284,7 @@ class HI_Diffusers_Model_Loader:
 
             else:
                 raise "Unsupported model_path or repo_id"
-        else:
+        else: #using controlnet
             if control_model_type != "stable-diffusion-xl-1.0-inpainting-0.1":
                 controlnet = ControlNetModel.from_pretrained(controlnet_repo_id, torch_dtype=torch.float16,
                                           variant="fp16").to("cuda")
@@ -311,7 +349,7 @@ class HI_Diffusers_Model_Loader:
         # Optional. enable_xformers_memory_efficient_attention can save memory usage and increase inference
         # speed. enable_model_cpu_offload and enable_vae_tiling can save memory usage.
         # Apply hidiffusion with a single line of code.
-        apply_hidiffusion(model)
+        apply_hidiffusion(model,apply_window_attn=apply_window_attn)
         model.enable_xformers_memory_efficient_attention()
         model.enable_model_cpu_offload()
         model.enable_vae_tiling()
@@ -339,6 +377,7 @@ class Hi_Sampler:
 
                 "controlnet_scale": ("FLOAT", {"default": 0.5, "min": 0.1, "max": 1.0, "step": 0.1}),
                 "clip_skip": ("INT", {"default": 1, "min": -5, "max": 100,"step": 1}),
+                "pre_input": ("INT", {"default": 512, "min": 256, "max": 1024, "step": 64}),
                 "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
                 "steps": ("INT", {"default": 30, "min": 1, "max": 10000}),
                 "cfg": ("FLOAT", {"default": 7.5, "min": 0.0, "max": 100.0, "step": 0.1, "round": 0.01}),
@@ -354,7 +393,8 @@ class Hi_Sampler:
     FUNCTION = "hi_sampler"
     CATEGORY = "Hidiffusion_Pro"
 
-    def hi_sampler(self, model, model_info, prompt, negative_prompt,  controlnet_scale,clip_skip,
+
+    def hi_sampler(self, model, model_info, prompt, negative_prompt,  controlnet_scale,clip_skip,pre_input,
                    seed,steps, cfg,  width,height,**kwargs):
         model_type, unet_model, control_net, function_choice, lora, trigger_words = model_info.split(";")
         # control_image = np.transpose(control_image, (
@@ -365,7 +405,7 @@ class Hi_Sampler:
         if control_net == "none":
             if function_choice == "img2img":
                 image = kwargs["image"]
-                image = tensor_to_image(image)
+                image = input_size_adaptation_output(image, pre_input, width, height)
                 image = \
                     model(prompt, negative_prompt=negative_prompt, image=image, num_inference_steps=steps,
                           guidance_scale=cfg, clip_skip=clip_skip,
@@ -377,10 +417,42 @@ class Hi_Sampler:
                           height=height, width=width, seed=seed, ).images[0]
         else:
             control_image = kwargs["control_image"]
-            control_image = tensor_to_image(control_image)
+            if control_net == "controlnet-tile-sdxl-1.0":
+                control_image = input_size_adaptation_output(control_image, pre_input, width, height)
+                controlnet_img = cv2.cvtColor(np.asarray(control_image), cv2.COLOR_RGB2BGR)
+                new_height, new_width, _ = controlnet_img.shape
+                ratio = np.sqrt(1024. * 1024. / (new_width * new_height))
+                W, H = int(new_width * ratio), int(new_height * ratio)
+
+                crop_w, crop_h = 0, 0
+                controlnet_img = cv2.resize(controlnet_img, (W, H))
+
+                blur_strength = random.sample([i / 10. for i in range(10, 201, 2)], k=1)[0]
+                radius = random.sample([i for i in range(1, 40, 2)], k=1)[0]
+                eps = random.sample([i / 1000. for i in range(1, 101, 2)], k=1)[0]
+                scale_factor = random.sample([i / 10. for i in range(10, 181, 5)], k=1)[0]
+
+                if random.random() > 0.5:
+                    controlnet_img = apply_gaussian_blur(controlnet_img, ksize=int(blur_strength),
+                                                         sigmaX=blur_strength / 2)
+
+                if random.random() > 0.5:
+                    # Apply Guided Filter
+                    controlnet_img = apply_guided_filter(controlnet_img, radius, eps, scale_factor)
+
+                # Resize image
+                controlnet_img = cv2.resize(controlnet_img, (int(W / scale_factor), int(H / scale_factor)),
+                                            interpolation=cv2.INTER_AREA)
+                controlnet_img = cv2.resize(controlnet_img, (W, H), interpolation=cv2.INTER_CUBIC)
+
+                controlnet_img = cv2.cvtColor(controlnet_img, cv2.COLOR_BGR2RGB)
+                control_image = Image.fromarray(controlnet_img)
+            else:
+                control_image=input_size_adaptation_output(control_image, pre_input, width, height)
+
             if function_choice == "img2img":
                 image = kwargs["image"]
-                image = tensor_to_image(image)
+                image=input_size_adaptation_output(image, pre_input, width, height)
                 if control_net == "stable-diffusion-xl-1.0-inpainting-0.1":
                     image = \
                         model(prompt, negative_prompt=negative_prompt, image=image, mask_image=control_image,
