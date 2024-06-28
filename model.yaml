@@ -18,6 +18,7 @@ surport_controlnet:
       - controlnet-openpose-sdxl-1.0
       - controlnet-scribble-sdxl-1.0
       - stable-diffusion-xl-1.0-inpainting-0.1
+      - controlnet-tile-sdxl-1.0
 sdxl_model:
       - stable-diffusion-xl-base-1.0                 #repo    stabilityai/stable-diffusion-xl-base-1.0
       - sdxl-flash                                   #repo    sd-community/sdxl-flash
