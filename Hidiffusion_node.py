@@ -15,6 +15,8 @@ from diffusers import (StableDiffusionXLPipeline, DiffusionPipeline, DDIMSchedul
                        EulerAncestralDiscreteScheduler, UniPCMultistepScheduler, AutoencoderKL,
                        StableDiffusionXLControlNetPipeline, DDPMScheduler, TCDScheduler, LCMScheduler,
                        StableDiffusionPipeline, StableDiffusionControlNetPipeline)
+from huggingface_hub import hf_hub_download
+
 from .hidiffusion.hidiffusion import apply_hidiffusion
 import folder_paths
 from safetensors.torch import load_file, load
@@ -30,17 +32,30 @@ else:
     from diffusers.models.unet_2d_condition import UNet2DConditionModel
 from comfy.utils import common_upscale
 from .guided_filter import FastGuidedFilter
+from .ip_adapter import IPAdapterXL,IPAdapter
+
 dir_path = os.path.dirname(os.path.abspath(__file__))
 path_dir = os.path.dirname(dir_path)
 file_path = os.path.dirname(path_dir)
 
 paths = []
-paths_a = []
 for search_path in folder_paths.get_folder_paths("diffusers"):
     if os.path.exists(search_path):
         for root, subdir, files in os.walk(search_path, followlinks=True):
             if "model_index.json" in files:
                 paths.append(os.path.relpath(root, start=search_path))
+            
+
+if paths:
+    paths = ["none"] + [x for x in paths if x]
+else:
+    paths = ["none", ]
+
+paths_a = []
+paths_b= []
+for search_path in folder_paths.get_folder_paths("diffusers"):
+    if os.path.exists(search_path):
+        for root, subdir, files in os.walk(search_path, followlinks=True):
             if "config.json" in files:
                 paths_a.append(os.path.relpath(root, start=search_path))
                 paths_a = ([z for z in paths_a if "controlnet-canny-sdxl-1.0" in z]
@@ -49,11 +64,14 @@ for search_path in folder_paths.get_folder_paths("diffusers"):
                            + [Q for Q in paths_a if "controlnet-openpose-sdxl-1.0" in Q]
                            + [Z for Z in paths_a if "controlnet-scribble-sdxl-1.0" in Z]
                            +[x for x in paths_a if "controlnet-tile-sdxl-1.0" in x])
-
-if paths != [] or paths_a != []:
-    paths = ["none"] + [x for x in paths if x] + [y for y in paths_a if y]
+            if "model_index.json" in files:
+                paths_b.append(os.path.relpath(root, start=search_path))
+                
+if paths_a:
+    paths_a = ["none"] + [y for y in paths_a if y]+[x for x in paths_b if x.split("\\")[-1]=="stable-diffusion-xl-1.0-inpainting-0.1"]
 else:
-    paths = ["none", ]
+    paths_a = ["none", ]
+
 
 scheduler_list = ["DDIM",
     "Euler",
@@ -211,14 +229,15 @@ class HI_Diffusers_Model_Loader:
                 "local_model_path": (paths,),
                 "repo_id": ("STRING", {"default": "stabilityai/stable-diffusion-xl-base-1.0"}),
                 "unet_model": (["none"] + folder_paths.get_filename_list("unet"),),
-                "controlnet_local_model": (paths,),
+                "controlnet_local_model": (paths_a,),
                 "controlnet_repo_id": ("STRING", {"default": "diffusers/controlnet-canny-sdxl-1.0"}),
                 "function_choice": (["txt2img", "img2img", ],),
                 "scheduler": (scheduler_list,),
                 "lora": (["none"] + folder_paths.get_filename_list("loras"),),
                 "lora_scale": ("FLOAT", {"default": 0.8, "min": 0.1, "max": 1.0, "step": 0.1}),
                 "trigger_words": ("STRING", {"default": "best quality"}),
-                "apply_window_attn":("BOOLEAN", {"default": False},)
+                "apply_window_attn":("BOOLEAN", {"default": False},),
+                "ip_adapter": ("BOOLEAN", {"default": False},),
             }
         }
 
@@ -228,7 +247,7 @@ class HI_Diffusers_Model_Loader:
     CATEGORY = "Hidiffusion_Pro"
 
     def loader_models(self, local_model_path, repo_id, unet_model, controlnet_local_model, controlnet_repo_id,
-                      function_choice,scheduler,lora,lora_scale,trigger_words,apply_window_attn):
+                      function_choice,scheduler,lora,lora_scale,trigger_words,apply_window_attn,ip_adapter):
         repo_id = instance_path(local_model_path, repo_id)
         controlnet_repo_id = instance_path(controlnet_local_model, controlnet_repo_id)
         scheduler_used = get_sheduler(scheduler)
@@ -239,6 +258,7 @@ class HI_Diffusers_Model_Loader:
             control_model_type="none"
         else:
             control_model_type = controlnet_repo_id.rsplit("/")[-1]
+        
         if control_model_type == "none":
             if model_type in xl_model_support:
                 if unet_model in sdxl_lightning_list:
@@ -337,6 +357,7 @@ class HI_Diffusers_Model_Loader:
             else:
                 raise "only support SDXL controlnet"
         model.scheduler = scheduler_used.from_config(model.scheduler.config, timestep_spacing="trailing")
+        
         if lora!="none":
             lora_path = folder_paths.get_full_path("loras", lora)
             lora_path = get_instance_path(lora_path)
@@ -345,16 +366,80 @@ class HI_Diffusers_Model_Loader:
             #     model.fuse_lora()
             model.load_lora_weights(lora_path, adapter_name=trigger_words)
             model.fuse_lora(lora_scale=lora_scale, adapter_names=[trigger_words,])
-
+       
         # Optional. enable_xformers_memory_efficient_attention can save memory usage and increase inference
         # speed. enable_model_cpu_offload and enable_vae_tiling can save memory usage.
         # Apply hidiffusion with a single line of code.
-        apply_hidiffusion(model,apply_window_attn=apply_window_attn)
         model.enable_xformers_memory_efficient_attention()
-        model.enable_model_cpu_offload()
         model.enable_vae_tiling()
-
-        model_info = str(";".join([model_type, unet_model, control_model_type, function_choice,lora,trigger_words]))
+        #apply_hidiffusion(model)
+        apply_hidiffusion(model,apply_window_attn=apply_window_attn)
+        #model.enable_model_cpu_offload()  # need below apply_hidiffusion(model)
+        adapter_info = "none"
+        if ip_adapter:
+            ip_path = os.path.join(dir_path, "weights")
+            ip_model_dir_origin=get_instance_path(ip_path)
+            device = "cuda"
+            if model_type in xl_model_support:  # #ip-adapter_sdxl.bin
+                ip_model_path_xl = os.path.join(ip_path, "sdxl_models", "ip-adapter_sdxl.bin")
+                if not os.path.exists(ip_model_path_xl):
+                    hf_hub_download(
+                        repo_id="h94/IP-Adapter",
+                        subfolder="sdxl_models",
+                        filename="ip-adapter_sdxl.bin",
+                        repo_type="model",
+                        local_dir=ip_model_dir_origin,
+                    )
+                    adapter_path_xl = get_instance_path(ip_model_path_xl)
+                else:
+                    adapter_path_xl = get_instance_path(ip_model_path_xl)
+                image_encoder_path_xl = get_instance_path(
+                    os.path.join(ip_path, "sdxl_models", "image_encoder", "model.safetensors"))
+                ip_model_path_dir = get_instance_path(os.path.join(ip_path, "sdxl_models", "image_encoder"))
+                if not os.path.exists(image_encoder_path_xl):
+                    hf_hub_download(
+                        repo_id="h94/IP-Adapter",
+                        subfolder="sdxl_models/image_encoder",
+                        repo_type="model",
+                        local_dir=ip_model_dir_origin,
+                    )
+                    adapter_encoder_xl = get_instance_path(ip_model_path_dir)
+                else:
+                    adapter_encoder_xl = get_instance_path(ip_model_path_dir)
+                model = IPAdapterXL(model, adapter_encoder_xl, adapter_path_xl, device,
+                                    target_blocks=["up_blocks.0.attentions.1"])
+            elif model_type == "stable-diffusion-v1-5":  # SD1.5 ip-adapter_sd15.bin
+                # sd1.5
+                ip_model_path = os.path.join(ip_path, "models", "ip-adapter_sd15.bin")
+                if not os.path.exists(ip_model_path):
+                    hf_hub_download(
+                        repo_id="h94/IP-Adapter",
+                        subfolder="models",
+                        filename="ip-adapter_sd15.bin",
+                        repo_type="model",
+                        local_dir=ip_model_dir_origin,
+                    )
+                    adapter_path_sd = get_instance_path(ip_model_path)
+                else:
+                    adapter_path_sd = get_instance_path(ip_model_path)
+                
+                image_encoder_path = get_instance_path(
+                    os.path.join(ip_path, "models", "image_encoder", "model.safetensors"))
+                ip_model_encoder_dir = get_instance_path(os.path.join(ip_path, "models", "image_encoder"))
+                if not os.path.exists(image_encoder_path):
+                    hf_hub_download(
+                        repo_id="h94/IP-Adapter",
+                        subfolder="models/image_encoder",
+                        filename="model.safetensors",
+                        repo_type="model",
+                        local_dir=ip_model_dir_origin,
+                    )
+                    adapter_encoder = get_instance_path(ip_model_encoder_dir)
+                else:
+                    adapter_encoder = get_instance_path(ip_model_encoder_dir)
+                model = IPAdapter(model, adapter_encoder,  adapter_path_sd, device, target_blocks=["block"])
+            adapter_info="ture"
+        model_info = str(";".join([model_type, unet_model, control_model_type, function_choice,lora,trigger_words, adapter_info]))
 
         return (model, model_info,)
 
@@ -372,9 +457,7 @@ class Hi_Sampler:
                 "prompt": ("STRING", {"multiline": True,
                                       "default": "a girl,8k,smile,best quality"}),
                 "negative_prompt": ("STRING", {"multiline": True,
-                                               "default": "blurry, ugly, duplicate, poorly drawn face, deformed, "
-                                                          "mosaic, artifacts, bad limbs"}),
-
+                                               "default": "text, watermark, lowres, low quality, worst quality, deformed, glitch, low contrast, noisy, saturation, blurry"}),
                 "controlnet_scale": ("FLOAT", {"default": 0.5, "min": 0.1, "max": 1.0, "step": 0.1}),
                 "clip_skip": ("INT", {"default": 1, "min": -5, "max": 100,"step": 1}),
                 "pre_input": ("INT", {"default": 512, "min": 256, "max": 1024, "step": 64}),
@@ -383,9 +466,11 @@ class Hi_Sampler:
                 "cfg": ("FLOAT", {"default": 7.5, "min": 0.0, "max": 100.0, "step": 0.1, "round": 0.01}),
                 "width": ("INT", {"default": 2048, "min": 64, "max": 8192, "step": 64, "display": "number"}),
                 "height": ("INT", {"default": 2048, "min": 64, "max": 8192, "step": 64, "display": "number"}),
+                "adapter_scale": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.1,}),
             },
             "optional": {"image": ("IMAGE",),
-                "control_image": ("IMAGE",)}
+                "control_image": ("IMAGE",),
+                "ip_image": ("IMAGE",)}
         }
 
     RETURN_TYPES = ("IMAGE",)
@@ -395,85 +480,165 @@ class Hi_Sampler:
 
 
     def hi_sampler(self, model, model_info, prompt, negative_prompt,  controlnet_scale,clip_skip,pre_input,
-                   seed,steps, cfg,  width,height,**kwargs):
-        model_type, unet_model, control_net, function_choice, lora, trigger_words = model_info.split(";")
+                   seed,steps, cfg,  width,height,adapter_scale,**kwargs):
+        model_type, unet_model, control_net, function_choice, lora, trigger_words, adapter_info = model_info.split(";")
+        
         # control_image = np.transpose(control_image, (
         #         #     0, 3, 1, 2))  # 将comfy输入的（batch_size,channels,rows,cols）改成条件需求的（3通道，16输出，3，1 ，pading=1）
-        if lora!="none":
-            prompt = prompt + " " + trigger_words
-        #print(model_type, unet_model, control_net, function_choice)
-        if control_net == "none":
-            if function_choice == "img2img":
-                image = kwargs["image"]
-                image = input_size_adaptation_output(image, pre_input, width, height)
-                image = \
-                    model(prompt, negative_prompt=negative_prompt, image=image, num_inference_steps=steps,
-                          guidance_scale=cfg, clip_skip=clip_skip,
-                          height=height, width=width, seed=seed, ).images[0]
-            else:
-                image = \
-                    model(prompt, negative_prompt=negative_prompt, num_inference_steps=steps,
-                          guidance_scale=cfg, clip_skip=clip_skip,
-                          height=height, width=width, seed=seed, ).images[0]
-        else:
-            control_image = kwargs["control_image"]
-            if control_net == "controlnet-tile-sdxl-1.0":
-                control_image = input_size_adaptation_output(control_image, pre_input, width, height)
-                controlnet_img = cv2.cvtColor(np.asarray(control_image), cv2.COLOR_RGB2BGR)
-                new_height, new_width, _ = controlnet_img.shape
-                ratio = np.sqrt(1024. * 1024. / (new_width * new_height))
-                W, H = int(new_width * ratio), int(new_height * ratio)
-
-                crop_w, crop_h = 0, 0
-                controlnet_img = cv2.resize(controlnet_img, (W, H))
-
-                blur_strength = random.sample([i / 10. for i in range(10, 201, 2)], k=1)[0]
-                radius = random.sample([i for i in range(1, 40, 2)], k=1)[0]
-                eps = random.sample([i / 1000. for i in range(1, 101, 2)], k=1)[0]
-                scale_factor = random.sample([i / 10. for i in range(10, 181, 5)], k=1)[0]
-
-                if random.random() > 0.5:
-                    controlnet_img = apply_gaussian_blur(controlnet_img, ksize=int(blur_strength),
-                                                         sigmaX=blur_strength / 2)
-
-                if random.random() > 0.5:
-                    # Apply Guided Filter
-                    controlnet_img = apply_guided_filter(controlnet_img, radius, eps, scale_factor)
-
-                # Resize image
-                controlnet_img = cv2.resize(controlnet_img, (int(W / scale_factor), int(H / scale_factor)),
-                                            interpolation=cv2.INTER_AREA)
-                controlnet_img = cv2.resize(controlnet_img, (W, H), interpolation=cv2.INTER_CUBIC)
-
-                controlnet_img = cv2.cvtColor(controlnet_img, cv2.COLOR_BGR2RGB)
-                control_image = Image.fromarray(controlnet_img)
-            else:
-                control_image=input_size_adaptation_output(control_image, pre_input, width, height)
-
-            if function_choice == "img2img":
-                image = kwargs["image"]
-                image=input_size_adaptation_output(image, pre_input, width, height)
-                if control_net == "stable-diffusion-xl-1.0-inpainting-0.1":
-                    image = \
-                        model(prompt, negative_prompt=negative_prompt, image=image, mask_image=control_image,
-                              num_inference_steps=steps, guidance_scale=cfg, height=height, clip_skip=clip_skip,
-                              width=width, controlnet_conditioning_scale=controlnet_scale,
-                              seed=seed, ).images[0]
+        if adapter_info!="none":
+            ip_image = kwargs["ip_image"]
+            ip_image = input_size_adaptation_output(ip_image, pre_input, width, height)
+            if lora != "none":
+                prompt = prompt + " " + trigger_words
+            # print(model_type, unet_model, control_net, function_choice)
+            if control_net == "none":
+                if function_choice == "img2img":
+                    image = kwargs["image"]
+                    image = input_size_adaptation_output(image, pre_input, width, height)
+                    images = \
+                        model.generate(prompt=prompt, negative_prompt=negative_prompt,pil_image=ip_image, image=image, scale=adapter_scale,num_inference_steps=steps,
+                              guidance_scale=cfg, clip_skip=clip_skip,
+                              height=height, width=width, seed=seed, )
                 else:
-                    image = model(prompt, negative_prompt=negative_prompt, image=image, control_image=control_image,
-                              num_inference_steps=steps, guidance_scale=cfg, height=height, width=width,
-                              clip_skip=clip_skip,
-                              controlnet_conditioning_scale=controlnet_scale,
-                              seed=seed, ).images[0]
+                    images = \
+                        model.generate(pil_image=ip_image,prompt=prompt, negative_prompt=negative_prompt,scale=adapter_scale, num_inference_steps=steps,
+                              guidance_scale=cfg, clip_skip=clip_skip,
+                              height=height, width=width, seed=seed, )
+    
             else:
-                image = model(prompt, negative_prompt=negative_prompt, image=control_image,
-                              num_inference_steps=steps, guidance_scale=cfg, height=height, width=width,
-                              clip_skip=clip_skip,
-                              controlnet_conditioning_scale=controlnet_scale,
-                              seed=seed, ).images[0]
+                control_image = kwargs["control_image"]
+                if control_net == "controlnet-tile-sdxl-1.0":
+                    control_image = input_size_adaptation_output(control_image, pre_input, width, height)
+                    controlnet_img = cv2.cvtColor(np.asarray(control_image), cv2.COLOR_RGB2BGR)
+                    new_height, new_width, _ = controlnet_img.shape
+                    ratio = np.sqrt(1024. * 1024. / (new_width * new_height))
+                    W, H = int(new_width * ratio), int(new_height * ratio)
+                    
+                    crop_w, crop_h = 0, 0
+                    controlnet_img = cv2.resize(controlnet_img, (W, H))
+                    
+                    blur_strength = random.sample([i / 10. for i in range(10, 201, 2)], k=1)[0]
+                    radius = random.sample([i for i in range(1, 40, 2)], k=1)[0]
+                    eps = random.sample([i / 1000. for i in range(1, 101, 2)], k=1)[0]
+                    scale_factor = random.sample([i / 10. for i in range(10, 181, 5)], k=1)[0]
+                    
+                    if random.random() > 0.5:
+                        controlnet_img = apply_gaussian_blur(controlnet_img, ksize=int(blur_strength),
+                                                             sigmaX=blur_strength / 2)
+                    
+                    if random.random() > 0.5:
+                        # Apply Guided Filter
+                        controlnet_img = apply_guided_filter(controlnet_img, radius, eps, scale_factor)
+                    
+                    # Resize image
+                    controlnet_img = cv2.resize(controlnet_img, (int(W / scale_factor), int(H / scale_factor)),
+                                                interpolation=cv2.INTER_AREA)
+                    controlnet_img = cv2.resize(controlnet_img, (W, H), interpolation=cv2.INTER_CUBIC)
+                    
+                    controlnet_img = cv2.cvtColor(controlnet_img, cv2.COLOR_BGR2RGB)
+                    control_image = Image.fromarray(controlnet_img)
+                else:
+                    control_image = input_size_adaptation_output(control_image, pre_input, width, height)
+                if function_choice == "img2img":
+                    image = kwargs["image"]
+                    image = input_size_adaptation_output(image, pre_input, width, height)
+                    if control_net == "stable-diffusion-xl-1.0-inpainting-0.1":
+                        images = model.generate(prompt=prompt, negative_prompt=negative_prompt, image=image,pil_image=ip_image, scale=adapter_scale,mask_image=control_image,
+                                  num_inference_steps=steps, guidance_scale=cfg, height=height, clip_skip=clip_skip,
+                                  width=width, controlnet_conditioning_scale=controlnet_scale,
+                                  seed=seed, )
+                    else:
+                        images =  model.generate(prompt=prompt, negative_prompt=negative_prompt, image=image, pil_image=ip_image,scale=adapter_scale,control_image=control_image,
+                                      num_inference_steps=steps, guidance_scale=cfg, height=height, width=width,
+                                      clip_skip=clip_skip,
+                                      controlnet_conditioning_scale=controlnet_scale,
+                                      seed=seed, )
+                else:
+                    images = model.generate(prompt=prompt, negative_prompt=negative_prompt, pil_image=ip_image,scale=adapter_scale,control_image=control_image,
+                                  num_inference_steps=steps, guidance_scale=cfg, height=height, width=width,
+                                  clip_skip=clip_skip,
+                                  controlnet_conditioning_scale=controlnet_scale,
+                                  seed=seed, )
+            images = images[0]
+        else:
+            if lora != "none":
+                prompt = prompt + " " + trigger_words
+            # print(model_type, unet_model, control_net, function_choice)
+            if control_net == "none":
+                if function_choice == "img2img":
+                    image = kwargs["image"]
+                    image = input_size_adaptation_output(image, pre_input, width, height)
+                    images = \
+                        model(prompt, negative_prompt=negative_prompt, image=image, num_inference_steps=steps,
+                              guidance_scale=cfg, clip_skip=clip_skip,
+                              height=height, width=width, seed=seed, ).images[0]
+                else:
+                    images = \
+                        model(prompt, negative_prompt=negative_prompt, num_inference_steps=steps,
+                              guidance_scale=cfg, clip_skip=clip_skip,
+                              height=height, width=width, seed=seed, ).images[0]
+            else:
+                control_image = kwargs["control_image"]
+                if control_net == "controlnet-tile-sdxl-1.0":
+                    control_image = input_size_adaptation_output(control_image, pre_input, width, height)
+                    controlnet_img = cv2.cvtColor(np.asarray(control_image), cv2.COLOR_RGB2BGR)
+                    new_height, new_width, _ = controlnet_img.shape
+                    ratio = np.sqrt(1024. * 1024. / (new_width * new_height))
+                    W, H = int(new_width * ratio), int(new_height * ratio)
+                    
+                    crop_w, crop_h = 0, 0
+                    controlnet_img = cv2.resize(controlnet_img, (W, H))
+                    
+                    blur_strength = random.sample([i / 10. for i in range(10, 201, 2)], k=1)[0]
+                    radius = random.sample([i for i in range(1, 40, 2)], k=1)[0]
+                    eps = random.sample([i / 1000. for i in range(1, 101, 2)], k=1)[0]
+                    scale_factor = random.sample([i / 10. for i in range(10, 181, 5)], k=1)[0]
+                    
+                    if random.random() > 0.5:
+                        controlnet_img = apply_gaussian_blur(controlnet_img, ksize=int(blur_strength),
+                                                             sigmaX=blur_strength / 2)
+                    
+                    if random.random() > 0.5:
+                        # Apply Guided Filter
+                        controlnet_img = apply_guided_filter(controlnet_img, radius, eps, scale_factor)
+                    
+                    # Resize image
+                    controlnet_img = cv2.resize(controlnet_img, (int(W / scale_factor), int(H / scale_factor)),
+                                                interpolation=cv2.INTER_AREA)
+                    controlnet_img = cv2.resize(controlnet_img, (W, H), interpolation=cv2.INTER_CUBIC)
+                    
+                    controlnet_img = cv2.cvtColor(controlnet_img, cv2.COLOR_BGR2RGB)
+                    control_image = Image.fromarray(controlnet_img)
+                else:
+                    control_image = input_size_adaptation_output(control_image, pre_input, width, height)
+                
+                if function_choice == "img2img":
+                    image = kwargs["image"]
+                    image = input_size_adaptation_output(image, pre_input, width, height)
+                    if control_net == "stable-diffusion-xl-1.0-inpainting-0.1":
+                        images = \
+                            model(prompt, negative_prompt=negative_prompt, image=image, mask_image=control_image,
+                                  num_inference_steps=steps, guidance_scale=cfg, height=height, clip_skip=clip_skip,
+                                  width=width, controlnet_conditioning_scale=controlnet_scale,
+                                  seed=seed, ).images[0]
+                    else:
+                        images = model(prompt, negative_prompt=negative_prompt, image=image, control_image=control_image,
+                                      num_inference_steps=steps, guidance_scale=cfg, height=height, width=width,
+                                      clip_skip=clip_skip,
+                                      controlnet_conditioning_scale=controlnet_scale,
+                                      seed=seed, ).images[0]
+                else:
+                    images = model(prompt, negative_prompt=negative_prompt, control_image=control_image,
+                                  num_inference_steps=steps, guidance_scale=cfg, height=height, width=width,
+                                  clip_skip=clip_skip,
+                                  controlnet_conditioning_scale=controlnet_scale,
+                                  seed=seed, ).images[0]
+        
 
-        output_image = torch.from_numpy(np.array(image).astype(np.float32) / 255.0).unsqueeze(0)
-        model.unfuse_lora()
+        output_image = torch.from_numpy(np.array(images).astype(np.float32) / 255.0).unsqueeze(0)
+        if lora != "none":
+            if adapter_info=="none":
+                model.unfuse_lora()
         del model
         return (output_image,)
 
