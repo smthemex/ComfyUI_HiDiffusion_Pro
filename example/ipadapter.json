@@ -1,0 +1,254 @@
+{
+  "last_node_id": 4,
+  "last_link_id": 4,
+  "nodes": [
+    {
+      "id": 3,
+      "type": "SaveImage",
+      "pos": [
+        1834,
+        231
+      ],
+      "size": {
+        "0": 328.0193176269531,
+        "1": 347.8486328125
+      },
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 3,
+          "label": "images"
+        }
+      ],
+      "properties": {},
+      "widgets_values": [
+        "ComfyUI"
+      ]
+    },
+    {
+      "id": 4,
+      "type": "LoadImage",
+      "pos": [
+        923,
+        535
+      ],
+      "size": {
+        "0": 315,
+        "1": 314
+      },
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            4
+          ],
+          "shape": 3,
+          "label": "IMAGE"
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null,
+          "shape": 3,
+          "label": "MASK"
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "002-austin-residence-studio-dubois-1390x912.jpg",
+        "image"
+      ]
+    },
+    {
+      "id": 1,
+      "type": "HI_Diffusers_Model_Loader",
+      "pos": [
+        917,
+        140
+      ],
+      "size": {
+        "0": 315,
+        "1": 342
+      },
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "links": [
+            1
+          ],
+          "shape": 3,
+          "label": "model",
+          "slot_index": 0
+        },
+        {
+          "name": "model_info",
+          "type": "STRING",
+          "links": [
+            2
+          ],
+          "shape": 3,
+          "label": "model_info",
+          "slot_index": 1
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "HI_Diffusers_Model_Loader"
+      },
+      "widgets_values": [
+        "stable-diffusion-v1-5",
+        "",
+        "none",
+        "none",
+        "",
+        "txt2img",
+        "DDIM",
+        "none",
+        0.8,
+        "best quality",
+        false,
+        true
+      ]
+    },
+    {
+      "id": 2,
+      "type": "Hi_Sampler",
+      "pos": [
+        1360,
+        203
+      ],
+      "size": [
+        408.1388799723243,
+        500.239977299943
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 1,
+          "label": "model"
+        },
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": null,
+          "label": "image"
+        },
+        {
+          "name": "control_image",
+          "type": "IMAGE",
+          "link": null,
+          "label": "control_image"
+        },
+        {
+          "name": "ip_image",
+          "type": "IMAGE",
+          "link": 4,
+          "label": "ip_image",
+          "slot_index": 3
+        },
+        {
+          "name": "model_info",
+          "type": "STRING",
+          "link": 2,
+          "widget": {
+            "name": "model_info"
+          },
+          "label": "model_info"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            3
+          ],
+          "shape": 3,
+          "label": "image",
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "Hi_Sampler"
+      },
+      "widgets_values": [
+        "",
+        "a girl,8k,smile,best quality",
+        "blurry, ugly, duplicate, poorly drawn face, deformed, mosaic, artifacts, bad limbs",
+        0.5,
+        1,
+        512,
+        670382731105169,
+        "randomize",
+        30,
+        7.5,
+        1024,
+        1024,
+        0.30000000000000004
+      ]
+    }
+  ],
+  "links": [
+    [
+      1,
+      1,
+      0,
+      2,
+      0,
+      "MODEL"
+    ],
+    [
+      2,
+      1,
+      1,
+      2,
+      4,
+      "STRING"
+    ],
+    [
+      3,
+      2,
+      0,
+      3,
+      0,
+      "IMAGE"
+    ],
+    [
+      4,
+      4,
+      0,
+      2,
+      3,
+      "IMAGE"
+    ]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 1.331000000000001,
+      "offset": {
+        "0": -717.5503540039062,
+        "1": -46.78485107421875
+      }
+    }
+  },
+  "version": 0.4
+}
