@@ -6,11 +6,10 @@ HiDiffusion  From: [link](https://github.com/megvii-research/HiDiffusion)
 
 Update 
 ----
--- add manne lighting lora
--- 加入controlnet-tile-sdxl的支持，内置图片预处理，默认512尺寸，新增apply_window_attn 条件控制。  
---修复节点连接逻辑，现在文生图模式，无需接入image，无controlnet也无需接入control_image   
-----Added support for control net file sdxl, built-in image preprocessing, default size of 512, and added condition control for apply_window_attn.   
---Fix node connection logic, now in text-based graphics mode, there is no need to connect to image, no controllnet, and no need to connect to controll_image   
+--增加adapter_style支持，SDXL需求的显存较大，虽然能跑CPU，但是不推荐，会爆显存，SD1.5测试没问题。  
+--修复controlnet菜单的加载列表的问题；  
+--Adding adapter_style support, SDXL requires a large amount of graphics memory. Although it can run on CPU, it is not recommended as it may cause graphics memory "explosion". SD1.5 testing is not a problem.   
+--Fix the issue with loading lists in the Controlnet menu;   
 
 My ComfyUI node list：
 -----
@@ -32,14 +31,18 @@ My ComfyUI node list：
 
 Notice（节点的特殊功能说明 Special Function Description of Nodes）  
 -----    
-
+-- 增加 manne加速Lora  
+-- 加入controlnet-tile-sdxl的支持，内置图片预处理，默认512尺寸，新增apply_window_attn 条件控制。  
+--修复节点连接逻辑，现在文生图模式，无需接入image，无controlnet也无需接入control_image   
 --支持SDXL-lighting\Hyper\LCM\DMD2\的加速Unet，建议适当提高步数；    
 --基于官方的更新，加入lora支持，需要填关键词；    
 --加入skip，去掉意义不大的其他参数；    
 --支持所有的SDXL controlnet模型（仅支持配置config文件的diffuser加载模式）；         
 --你可以修改model.yaml文件，添加其他的可能支持SDXL“扩散模型”或者“controlnet”或者SDXL“unet”模型；                 
 
-
+-- add manne lighting lora  
+--Added support for control net file sdxl, built-in image preprocessing, default size of 512, and added condition control for apply_window_attn.   
+--Fix node connection logic, now in text-based graphics mode, there is no need to connect to image, no controllnet, and no need to connect to controll_image   
 --Support acceleration Unet for SDXL lighting, Hyper, LCM, and DMD2. It is recommended to increase the number of steps appropriately;   
 --Based on official updates, adding support for Lora requires filling in keywords;   
 --Add skip and remove other parameters that are not significant;   
@@ -58,17 +61,24 @@ Notice（节点的特殊功能说明 Special Function Description of Nodes）
   
 2.requirements  
 ----
-need diffusers >=0.27.0  
+diffusers >=0.28.0    
 yaml
 
 3 About models    
 ----
   3种调用模型节点的方法   
-  一种是,在repo_id填写诸如"stabilityai/stable-diffusion-xl-base-1.0" 这样的标准抱脸的repo_id,系统会自己下载或者查找.cache路径，这个要开全局外网或者你开启了hf镜像  
+  一种是:在repo_id填写诸如"stabilityai/stable-diffusion-xl-base-1.0" 这样的标准抱脸的repo_id,系统会自己下载或者查找.cache路径，这个要开全局外网或者你开启了hf镜像  
   
-  一种是，把你下载好的模型放在comfyUI的"models/diffusers"路径下，记得不要改最尾的模型路径名“比如stable-diffusion-xl-base-1.0”，就可以用菜单直接调用。（注意：要用菜单的方式，必须删掉repo_id默认的"stabilityai/stable-diffusion-xl-base-1.0"，让repo_id留空，controlnet_id一样，要调用菜单，必须留空controlnet_id） 
+  一种是:把你下载好的模型放在comfyUI的"models/diffusers"路径下，记得不要改最尾的模型路径名“比如stable-diffusion-xl-base-1.0”，就可以用菜单直接调用。（注意：要用菜单的方式，必须删掉repo_id默认的"stabilityai/stable-diffusion-xl-base-1.0"，让repo_id留空，controlnet_id一样，要调用菜单，必须留空controlnet_id） 
   
-  一种是，你在repo_id或controlnet_id直接填写诸如“x:/xx/xx/stabilityai/stable-diffusion-xl-base-1.0” 这样的已经下载好的扩散模型的绝对路径也能用
+  一种是:你在repo_id或controlnet_id直接填写诸如“x:/xx/xx/stabilityai/stable-diffusion-xl-base-1.0” 这样的已经下载好的扩散模型的绝对路径也能用
+
+  Three methods for calling model nodes   
+  Filling in the corresponding repo_id will download the model   
+  or   
+  in the diffuse directory, store and use the downloaded model  （Notice:in this method,repo_id or controlnet_repo_id must be empty）  
+  or  
+  using repo_id,and Fill in the absolute path of your diffusers model,using"/"   
 
 controlnet模型存放示例：
 ```
@@ -92,13 +102,23 @@ controlnet模型存放示例：
 |         ├── config.json   
 |         ├── diffusion_pytorch_model.fp16.safetensors
 ```
-  
-  Three methods for calling model nodes   
-  Filling in the corresponding repo_id will download the model   
-  or   
-  in the diffuse directory, store and use the downloaded model  （Notice:in this method,repo_id or controlnet_repo_id must be empty）  
-  or  
-  using repo_id,and Fill in the absolute path of your diffusers model,using"/"   
+ip_adapter model 模型存放示例： 
+
+如果不存放对应，运行时会自动下载。  If the corresponding file is not stored, it will be automatically downloaded at runtime.  
+```
+├── ComfyUI/custom_nodes/ComfyUI_HiDiffusion_Pro/weights/  
+|     ├──models
+|         ├── ip-adapter_sd15.bin
+|         ├── image_encoder/
+|             ├── config.json
+|             ├── model.safetensors
+|     ├──sdxl_models
+|         ├── ip-adapter_sdxl.bin
+|         ├── image_encoder/
+|             ├── config.json
+|             ├── model.safetensors
+```
+
 
 4 other
 ----
@@ -107,6 +127,9 @@ For partially supported models, please refer to the model.yaml file
 
 5 example
 -----
+ txt2img using ip_adapter_style
+ ![](https://github.com/smthemex/ComfyUI_HiDiffusion_Pro/blob/main/example/ipadapter.png)
+
 img2img use controlnet and lora     图生图加controlnet和lora   
 ![](https://github.com/smthemex/ComfyUI_HiDiffusion_Pro/blob/main/example/img2imgcontrolnetlora.png)
 
