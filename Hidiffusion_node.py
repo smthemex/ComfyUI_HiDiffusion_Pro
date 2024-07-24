@@ -10,11 +10,11 @@ from diffusers import (StableDiffusionXLPipeline, DiffusionPipeline, DDIMSchedul
                        KDPM2AncestralDiscreteScheduler, LMSDiscreteScheduler,
                        AutoPipelineForInpainting, DPMSolverMultistepScheduler, DPMSolverSinglestepScheduler,
                        EulerDiscreteScheduler, HeunDiscreteScheduler, UNet2DConditionModel,
-                       StableDiffusionXLImg2ImgPipeline,AutoPipelineForImage2Image,
+                       StableDiffusionXLImg2ImgPipeline, AutoPipelineForImage2Image,
                        AutoPipelineForText2Image, StableDiffusionXLControlNetImg2ImgPipeline, KDPM2DiscreteScheduler,
                        EulerAncestralDiscreteScheduler, UniPCMultistepScheduler, AutoencoderKL,
                        StableDiffusionXLControlNetPipeline, DDPMScheduler, TCDScheduler, LCMScheduler,
-                       StableDiffusionPipeline, StableDiffusionControlNetPipeline)
+                       StableDiffusionPipeline, StableDiffusionControlNetPipeline, StableDiffusionXLInpaintPipeline)
 from huggingface_hub import hf_hub_download
 
 from .hidiffusion.hidiffusion import apply_hidiffusion
@@ -37,40 +37,6 @@ from .ip_adapter import IPAdapterXL,IPAdapter
 dir_path = os.path.dirname(os.path.abspath(__file__))
 path_dir = os.path.dirname(dir_path)
 file_path = os.path.dirname(path_dir)
-
-paths = []
-for search_path in folder_paths.get_folder_paths("diffusers"):
-    if os.path.exists(search_path):
-        for root, subdir, files in os.walk(search_path, followlinks=True):
-            if "model_index.json" in files:
-                paths.append(os.path.relpath(root, start=search_path))
-            
-
-if paths:
-    paths = ["none"] + [x for x in paths if x]
-else:
-    paths = ["none", ]
-
-paths_a = []
-paths_b= []
-for search_path in folder_paths.get_folder_paths("diffusers"):
-    if os.path.exists(search_path):
-        for root, subdir, files in os.walk(search_path, followlinks=True):
-            if "config.json" in files:
-                paths_a.append(os.path.relpath(root, start=search_path))
-                paths_a = ([z for z in paths_a if "controlnet-canny-sdxl-1.0" in z]
-                           + [p for p in paths_a if "MistoLine" in p]
-                           + [o for o in paths_a if "lcm-sdxl" in o]
-                           + [Q for Q in paths_a if "controlnet-openpose-sdxl-1.0" in Q]
-                           + [Z for Z in paths_a if "controlnet-scribble-sdxl-1.0" in Z]
-                           +[x for x in paths_a if "controlnet-tile-sdxl-1.0" in x])
-            if "model_index.json" in files:
-                paths_b.append(os.path.relpath(root, start=search_path))
-                
-if paths_a:
-    paths_a = ["none"] + [y for y in paths_a if y]+[x for x in paths_b if x.split("\\")[-1]=="stable-diffusion-xl-1.0-inpainting-0.1"]
-else:
-    paths_a = ["none", ]
 
 
 scheduler_list = ["DDIM",
@@ -226,16 +192,18 @@ class HI_Diffusers_Model_Loader:
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "local_model_path": (paths,),
-                "repo_id": ("STRING", {"default": "stabilityai/stable-diffusion-xl-base-1.0"}),
-                "unet_model": (["none"] + folder_paths.get_filename_list("unet"),),
-                "controlnet_local_model": (paths_a,),
-                "controlnet_repo_id": ("STRING", {"default": "diffusers/controlnet-canny-sdxl-1.0"}),
+                "repo_id": ("STRING", {"default":""}),
+                "vae_id": ("STRING", {"default": ""}),
+                "controlnet_repo_id": ("STRING", {"default": ""}),
+                "model_category": (["sdxl","sd15","sd21","xl_turbo","inpainting","ghibli","playground"],),
                 "function_choice": (["txt2img", "img2img", ],),
-                "scheduler": (scheduler_list,),
+                "ckpt_name": (folder_paths.get_filename_list("checkpoints"),),
+                "unet_model": (["none"] + folder_paths.get_filename_list("unet"),),
+                "controlnet_model": (["none"] + folder_paths.get_filename_list("controlnet"),),
                 "lora": (["none"] + folder_paths.get_filename_list("loras"),),
                 "lora_scale": ("FLOAT", {"default": 0.8, "min": 0.1, "max": 1.0, "step": 0.1}),
                 "trigger_words": ("STRING", {"default": "best quality"}),
+                "scheduler": (scheduler_list,),
                 "apply_window_attn":("BOOLEAN", {"default": False},),
                 "ip_adapter": ("BOOLEAN", {"default": False},),
             }
@@ -246,100 +214,169 @@ class HI_Diffusers_Model_Loader:
     FUNCTION = "loader_models"
     CATEGORY = "Hidiffusion_Pro"
 
-    def loader_models(self, local_model_path, repo_id, unet_model, controlnet_local_model, controlnet_repo_id,
-                      function_choice,scheduler,lora,lora_scale,trigger_words,apply_window_attn,ip_adapter):
-        repo_id = instance_path(local_model_path, repo_id)
-        controlnet_repo_id = instance_path(controlnet_local_model, controlnet_repo_id)
+    def loader_models(self,  repo_id,vae_id,controlnet_repo_id, model_category,function_choice,ckpt_name,unet_model, controlnet_model,
+                      lora,lora_scale,trigger_words,scheduler,apply_window_attn,ip_adapter):
+        ckpt_path = folder_paths.get_full_path("checkpoints", ckpt_name)
+        controlnet_single_model=folder_paths.get_full_path("controlnet", controlnet_model)
         scheduler_used = get_sheduler(scheduler)
-        if repo_id == "none":
-            raise "need repo_id or model path"
-        model_type = repo_id.rsplit("/")[-1]
-        if controlnet_repo_id=="none":
-            control_model_type="none"
-        else:
+        ip_path = os.path.join(folder_paths.models_dir, "photomaker")
+        sdxl_models_pre = os.path.join(ip_path, "sdxl_models", "image_encoder")
+        if not os.path.exists(sdxl_models_pre):
+            os.makedirs(sdxl_models_pre)
+        sd_models_pre = os.path.join(ip_path, "models", "image_encoder")
+        if not os.path.exists(sd_models_pre):
+            os.makedirs(sd_models_pre)
+        if controlnet_repo_id:
             control_model_type = controlnet_repo_id.rsplit("/")[-1]
-        
-        if control_model_type == "none":
-            if model_type in xl_model_support:
-                if unet_model in sdxl_lightning_list:
-                    light_path = os.path.join(file_path, "models", "unet", unet_model)
-                    ckpt = get_instance_path(light_path)
-                    if unet_model.rsplit('.', 1)[-1] == "bin":
-                        unet = UNet2DConditionModel.from_config(repo_id, subfolder="unet").to("cuda", torch.float16)
-                        unet.load_state_dict(torch.load(ckpt))
-                    else:
-                        unet = UNet2DConditionModel.from_pretrained(repo_id, subfolder="unet").to("cuda", torch.float16)
-                        unet.load_state_dict(load_file(ckpt, device="cuda"), strict=False, )
-                    if function_choice == "img2img":
-                        model = StableDiffusionXLImg2ImgPipeline.from_pretrained(repo_id, unet=unet, torch_dtype=torch.float16,
-                                                                          variant="fp16").to("cuda")
-                    else:
-                        model = StableDiffusionXLPipeline.from_pretrained(repo_id, unet=unet, torch_dtype=torch.float16,
-                                                                          variant="fp16").to("cuda")
+        else:
+            control_model_type = "none"
+        if controlnet_single_model:
+            control_model_type=controlnet_model
+            
+        if model_category=="sd15" or model_category=="sd21"  :
+            model_type="stable-diffusion-v1-5"
+            if not repo_id: # using single model
+                original_config_file = os.path.join(folder_paths.models_dir, "configs", "v1-inference.yaml")
+                if dif_version_int >= 28:
+                    model = StableDiffusionPipeline.from_single_file(
+                        ckpt_path, original_config=original_config_file, torch_dtype=torch.float16).to("cuda")
                 else:
-                    if function_choice == "img2img":
-                        model = StableDiffusionXLImg2ImgPipeline.from_pretrained(repo_id,
-                                                                          torch_dtype=torch.float16, variant="fp16").to(
-                            "cuda")
-                    else:
-                        model = StableDiffusionXLPipeline.from_pretrained(repo_id,
-                                                                          torch_dtype=torch.float16, variant="fp16").to(
-                            "cuda")
-
-            elif model_type == "sdxl-turbo":
+                    model = StableDiffusionPipeline.from_single_file(
+                        ckpt_path, original_config_file=original_config_file, torch_dtype=torch.float16).to("cuda")
+            else:
+                model = DiffusionPipeline.from_pretrained(repo_id,torch_dtype=torch.float16, variant="fp16").to("cuda")
+        elif model_category=="ghibli":
+            model_type = "stable-diffusion-xl-base-1.0"
+            if not repo_id:
+                model = StableDiffusionPipeline.from_single_file(ckpt_path,torch_dtype=torch.float16, variant="fp16").to("cuda")
+            else:
+                model = StableDiffusionPipeline.from_pretrained(repo_id, torch_dtype=torch.float16, variant="fp16").to("cuda")
+        elif model_category=="xl_turbo":
+            model_type = "sdxl-turbo"
+            if not repo_id:
+                original_config_file = os.path.join(dir_path, "weights", "sd_xl_base.yaml")
+                if dif_version_int >= 28:
+                    model = StableDiffusionXLPipeline.from_single_file(
+                        ckpt_path, original_config=original_config_file, torch_dtype=torch.float16).to("cuda")
+                else:
+                    model = StableDiffusionXLPipeline.from_single_file(
+                        ckpt_path, original_config_file=original_config_file, torch_dtype=torch.float16).to("cuda")
+            else:
                 if function_choice == "img2img":
                     model = AutoPipelineForImage2Image.from_pretrained(repo_id, torch_dtype=torch.float16,
-                                                                      variant="fp16").to('cuda')
+                                                                       variant="fp16").to('cuda')
                 else:
                     model = AutoPipelineForText2Image.from_pretrained(repo_id, torch_dtype=torch.float16,
                                                                       variant="fp16").to('cuda')
-            elif model_type in normal_model_list:
-                if model_type=="Ghibli-Diffusion":
-                    model = StableDiffusionPipeline.from_pretrained(repo_id,
-                                                              torch_dtype=torch.float16, variant="fp16").to("cuda")
-                else:
-                    model = DiffusionPipeline.from_pretrained(repo_id,
-                                                                    torch_dtype=torch.float16, variant="fp16").to(
-                        "cuda")
-
+        elif model_category=="playground":
+            model_type = "playground-v2-1024px-aesthetic"
+            if not repo_id:
+                model = StableDiffusionXLPipeline.from_single_file(ckpt_path,torch_dtype=torch.float16, variant="fp16").to("cuda")
             else:
-                raise "Unsupported model_path or repo_id"
-        else: #using controlnet
-            if control_model_type != "stable-diffusion-xl-1.0-inpainting-0.1":
-                controlnet = ControlNetModel.from_pretrained(controlnet_repo_id, torch_dtype=torch.float16,
-                                          variant="fp16").to("cuda")
-            else:
-                controlnet=""
-            if model_type in xl_model_support:
-                if unet_model in sdxl_lightning_list:
-                    light_path = os.path.join(file_path, "models", "unet", unet_model)
-                    ckpt = get_instance_path(light_path)
-                    if unet_model.rsplit('.', 1)[-1] == "bin":
-                        unet = UNet2DConditionModel.from_config(repo_id, subfolder="unet").to("cuda", torch.float16)
-                        unet.load_state_dict(torch.load(ckpt))
+                model = DiffusionPipeline.from_pretrained(repo_id,torch_dtype=torch.float16, variant="fp16").to("cuda")
+        elif model_category == "inpainting":
+            model_type = "stable-diffusion-xl-1.0-inpainting-0.1"
+            control_model_type="stable-diffusion-xl-1.0-inpainting-0.1"
+            if not controlnet_repo_id:
+                original_config_file = os.path.join(dir_path, "weights", "sd_xl_base.yaml")
+                if controlnet_model!="none" and "inpaint" in controlnet_model :
+                    unet = UNet2DConditionModel.from_config("stabilityai/stable-diffusion-xl-base-1.0",
+                                                            subfolder="unet").to("cuda", torch.float16)
+                    unet.load_state_dict(load_file(controlnet_single_model, device="cuda"), strict=False, )
+                    if dif_version_int >= 28:
+                        model = StableDiffusionXLInpaintPipeline.from_single_file(ckpt_path,unet=unet,
+                                                                                  original_config=original_config_file,
+                                                                                  torch_dtype=torch.float16,
+                                                                                  variant="fp16").to("cuda")
                     else:
-                        unet = UNet2DConditionModel.from_pretrained(repo_id, subfolder="unet").to("cuda", torch.float16)
-                        unet.load_state_dict(load_file(ckpt, device="cuda"), strict=False, )
-                    if control_model_type == "stable-diffusion-xl-1.0-inpainting-0.1":
-                        model = AutoPipelineForInpainting.from_pretrained(repo_id, unet=unet,
+                        model = StableDiffusionXLInpaintPipeline.from_single_file(ckpt_path,unet=unet,
+                                                                                  original_config_file=original_config_file,
+                                                                                  torch_dtype=torch.float16,variant="fp16").to("cuda")
+                else:
+                    if dif_version_int >= 28:
+                        model = StableDiffusionXLInpaintPipeline.from_single_file(ckpt_path,
+                                                                                  original_config=original_config_file,
+                                                                                  torch_dtype=torch.float16,
+                                                                                  variant="fp16").to("cuda")
+                    else:
+                        model = StableDiffusionXLInpaintPipeline.from_single_file(ckpt_path,
+                                                                                  original_config_file=original_config_file,
+                                                                                  torch_dtype=torch.float16,
+                                                                                  variant="fp16").to("cuda")
+                
+            else:
+                model = AutoPipelineForInpainting.from_pretrained(controlnet_repo_id, torch_dtype=torch.float16,
+                                                                  variant="fp16").to("cuda")
+            if unet_model in sdxl_lightning_list:
+                ckpt = folder_paths.get_full_path("unet", unet_model)
+                unet = UNet2DConditionModel.from_config("stabilityai/stable-diffusion-xl-base-1.0",
+                                                        subfolder="unet").to("cuda", torch.float16)
+                if unet_model.rsplit('.', 1)[-1] == "bin":
+                    unet.load_state_dict(torch.load(ckpt))
+                else:
+                    unet.load_state_dict(load_file(ckpt, device="cuda"), strict=False, )
+                model.unet = unet
+        else:
+            model_type = "stable-diffusion-xl-base-1.0"
+            if not repo_id:
+                original_config_file = os.path.join(dir_path, "weights", "sd_xl_base.yaml")
+                if control_model_type == "none": #不启用
+                    if dif_version_int >= 28:
+                        model = StableDiffusionXLPipeline.from_single_file(
+                            ckpt_path, original_config=original_config_file, torch_dtype=torch.float16).to("cuda")
+                    else:
+                        model = StableDiffusionXLPipeline.from_single_file(
+                            ckpt_path, original_config_file=original_config_file, torch_dtype=torch.float16).to("cuda")
+                else:
+                    if controlnet_single_model:
+                        if not controlnet_repo_id:
+                            unet = UNet2DConditionModel.from_config("stabilityai/stable-diffusion-xl-base-1.0",
+                                                                    subfolder="unet").to("cuda", torch.float16)
+                            unet.load_state_dict(load_file(controlnet_single_model, device="cuda"), strict=False, )
+                            controlnet = ControlNetModel.from_unet(unet).to("cuda")
+                        else:
+                            controlnet = ControlNetModel.from_pretrained(controlnet_repo_id, torch_dtype=torch.float16,
+                                                                         variant="fp16").to("cuda")
+                    else:
+                        controlnet = ""
+                    if dif_version_int >= 28:
+                        if function_choice == "img2img":
+                            model = StableDiffusionXLControlNetImg2ImgPipeline.from_single_file(ckpt_path,original_config=original_config_file,
+                                                                                               controlnet=controlnet,
+                                                                                               torch_dtype=torch.float16,
+                                                                                               variant="fp16").to(
+                                "cuda")
+                        else:
+                            model = StableDiffusionXLControlNetPipeline.from_single_file(
+                                ckpt_path, original_config=original_config_file, controlnet=controlnet,
+                                torch_dtype=torch.float16).to("cuda")
+                    else:
+                        if function_choice == "img2img":
+                            model = StableDiffusionXLControlNetImg2ImgPipeline.from_single_file(ckpt_path,
+                                                                                                original_config_file=original_config_file,
+                                                                                                controlnet=controlnet,
+                                                                                                torch_dtype=torch.float16,
+                                                                                                variant="fp16").to("cuda")
+                        else:
+                            model = StableDiffusionXLControlNetPipeline.from_single_file(
+                            ckpt_path, original_config_file=original_config_file,controlnet=controlnet, torch_dtype=torch.float16).to("cuda")
+            else:
+                if control_model_type == "none":
+                    if function_choice == "img2img":
+                        model = StableDiffusionXLImg2ImgPipeline.from_pretrained(repo_id,
+                                                                                 torch_dtype=torch.float16,
+                                                                                 variant="fp16").to("cuda")
+                    else:
+                        model = StableDiffusionXLPipeline.from_pretrained(repo_id,
                                                                           torch_dtype=torch.float16,
                                                                           variant="fp16").to("cuda")
-                    elif function_choice == "img2img":
-                        model = StableDiffusionXLControlNetImg2ImgPipeline.from_pretrained(repo_id, unet=unet,
-                                                                                           controlnet=controlnet,
-                                                                                           torch_dtype=torch.float16,
-                                                                                           variant="fp16").to("cuda")
-                    else:
-                        model = StableDiffusionXLControlNetPipeline.from_pretrained(repo_id, unet=unet,
-                                                                                    controlnet=controlnet,
-                                                                                    torch_dtype=torch.float16,
-                                                                                    variant="fp16").to("cuda")
                 else:
-                    if control_model_type == "stable-diffusion-xl-1.0-inpainting-0.1":
-                        model = AutoPipelineForInpainting.from_pretrained(repo_id,
-                                                                          torch_dtype=torch.float16,
-                                                                          variant="fp16").to("cuda")
-                    elif function_choice == "img2img":
+                    if control_model_type != "stable-diffusion-xl-1.0-inpainting-0.1":
+                        controlnet = ControlNetModel.from_pretrained(controlnet_repo_id, torch_dtype=torch.float16,
+                                                                     variant="fp16").to("cuda")
+                    else:
+                        controlnet = ""
+                    if function_choice == "img2img":
                         model = StableDiffusionXLControlNetImg2ImgPipeline.from_pretrained(repo_id,
                                                                                            controlnet=controlnet,
                                                                                            torch_dtype=torch.float16,
@@ -349,77 +386,77 @@ class HI_Diffusers_Model_Loader:
                                                                                     controlnet=controlnet,
                                                                                     torch_dtype=torch.float16,
                                                                                     variant="fp16").to("cuda")
-
-            elif model_type == "sdxl-turbo":
-                model = StableDiffusionXLControlNetPipeline.from_pretrained(repo_id, controlnet=controlnet,
-                                                                            torch_dtype=torch.float16,
-                                                                          variant="fp16").to('cuda')
-            else:
-                raise "only support SDXL controlnet"
-        model.scheduler = scheduler_used.from_config(model.scheduler.config, timestep_spacing="trailing")
+            if unet_model in sdxl_lightning_list:
+                ckpt = folder_paths.get_full_path("unet", unet_model)
+                unet = UNet2DConditionModel.from_config("stabilityai/stable-diffusion-xl-base-1.0",
+                                                        subfolder="unet").to("cuda", torch.float16)
+                if unet_model.rsplit('.', 1)[-1] == "bin":
+                    unet.load_state_dict(torch.load(ckpt))
+                else:
+                    unet.load_state_dict(load_file(ckpt, device="cuda"), strict=False, )
+                model.unet = unet
+                    
+        if vae_id != "":
+            model.vae = AutoencoderKL.from_pretrained(vae_id, torch_dtype=torch.float16).to("cuda")
+        if control_model_type == "stable-diffusion-xl-1.0-inpainting-0.1":
+            model.scheduler =scheduler_used.from_pretrained("stabilityai/stable-diffusion-xl-base-1.0", subfolder="scheduler")
+        else:
+            model.scheduler = scheduler_used.from_config(model.scheduler.config, timestep_spacing="trailing")
         
         if lora!="none":
             lora_path = folder_paths.get_full_path("loras", lora)
             lora_path = get_instance_path(lora_path)
-            # if lora in lightning_lora or lora in lightning_xl_lora:
-            #     model.load_lora_weights(lora_path)
-            #     model.fuse_lora()
             model.load_lora_weights(lora_path, adapter_name=trigger_words)
             model.fuse_lora(lora_scale=lora_scale, adapter_names=[trigger_words,])
        
-        # Optional. enable_xformers_memory_efficient_attention can save memory usage and increase inference
-        # speed. enable_model_cpu_offload and enable_vae_tiling can save memory usage.
-        # Apply hidiffusion with a single line of code.
         model.enable_xformers_memory_efficient_attention()
         model.enable_vae_tiling()
-        #apply_hidiffusion(model)
-        apply_hidiffusion(model,apply_window_attn=apply_window_attn)
+        apply_hidiffusion(model,apply_window_attn=apply_window_attn,model_type_str=model_type)
         #model.enable_model_cpu_offload()  # need below apply_hidiffusion(model)
         adapter_info = "none"
         if ip_adapter:
-            ip_path = os.path.join(dir_path, "weights")
-            ip_model_dir_origin=get_instance_path(ip_path)
+            model.enable_freeu(s1=0.6, s2=0.4, b1=1.1, b2=1.2)
+        
+            ip_model_dir_origin = get_instance_path(ip_path)
             device = "cuda"
-            if model_type in xl_model_support:  # #ip-adapter_sdxl.bin
+            if model_type == "stable-diffusion-xl-base-1.0":  # #ip-adapter_sdxl.bin
                 ip_model_path_xl = os.path.join(ip_path, "sdxl_models", "ip-adapter_sdxl.bin")
+               
                 if not os.path.exists(ip_model_path_xl):
-                    hf_hub_download(
+                    adapter_path_xl = hf_hub_download(
                         repo_id="h94/IP-Adapter",
                         subfolder="sdxl_models",
                         filename="ip-adapter_sdxl.bin",
-                        repo_type="model",
                         local_dir=ip_model_dir_origin,
                     )
-                    adapter_path_xl = get_instance_path(ip_model_path_xl)
                 else:
                     adapter_path_xl = get_instance_path(ip_model_path_xl)
                 image_encoder_path_xl = get_instance_path(
                     os.path.join(ip_path, "sdxl_models", "image_encoder", "model.safetensors"))
+                if not os.path.exists(ip_model_path_xl):
+                    os.makedirs(ip_model_path_xl)
                 ip_model_path_dir = get_instance_path(os.path.join(ip_path, "sdxl_models", "image_encoder"))
                 if not os.path.exists(image_encoder_path_xl):
-                    hf_hub_download(
+                    adapter_encoder_xl = hf_hub_download(
                         repo_id="h94/IP-Adapter",
                         subfolder="sdxl_models/image_encoder",
-                        repo_type="model",
                         local_dir=ip_model_dir_origin,
                     )
-                    adapter_encoder_xl = get_instance_path(ip_model_path_dir)
                 else:
                     adapter_encoder_xl = get_instance_path(ip_model_path_dir)
                 model = IPAdapterXL(model, adapter_encoder_xl, adapter_path_xl, device,
                                     target_blocks=["up_blocks.0.attentions.1"])
+                adapter_info = "ture"
             elif model_type == "stable-diffusion-v1-5":  # SD1.5 ip-adapter_sd15.bin
                 # sd1.5
                 ip_model_path = os.path.join(ip_path, "models", "ip-adapter_sd15.bin")
                 if not os.path.exists(ip_model_path):
-                    hf_hub_download(
+                    adapter_path_sd = hf_hub_download(
                         repo_id="h94/IP-Adapter",
                         subfolder="models",
                         filename="ip-adapter_sd15.bin",
-                        repo_type="model",
                         local_dir=ip_model_dir_origin,
                     )
-                    adapter_path_sd = get_instance_path(ip_model_path)
                 else:
                     adapter_path_sd = get_instance_path(ip_model_path)
                 
@@ -427,20 +464,23 @@ class HI_Diffusers_Model_Loader:
                     os.path.join(ip_path, "models", "image_encoder", "model.safetensors"))
                 ip_model_encoder_dir = get_instance_path(os.path.join(ip_path, "models", "image_encoder"))
                 if not os.path.exists(image_encoder_path):
-                    hf_hub_download(
+                    adapter_encoder = hf_hub_download(
                         repo_id="h94/IP-Adapter",
                         subfolder="models/image_encoder",
                         filename="model.safetensors",
-                        repo_type="model",
                         local_dir=ip_model_dir_origin,
                     )
-                    adapter_encoder = get_instance_path(ip_model_encoder_dir)
                 else:
                     adapter_encoder = get_instance_path(ip_model_encoder_dir)
-                model = IPAdapter(model, adapter_encoder,  adapter_path_sd, device, target_blocks=["block"])
-            adapter_info="ture"
-        model_info = str(";".join([model_type, unet_model, control_model_type, function_choice,lora,trigger_words, adapter_info]))
-
+                model = IPAdapter(model, adapter_encoder, adapter_path_sd, device, target_blocks=["block"])
+                adapter_info = "ture"
+            
+            else:
+                adapter_info = "none"
+            torch.cuda.empty_cache()
+        torch.cuda.empty_cache()
+        model_info = ";".join([model_type, unet_model, control_model_type, function_choice,lora,trigger_words, adapter_info])
+        torch.cuda.empty_cache()
         return (model, model_info,)
 
 
@@ -479,21 +519,21 @@ class Hi_Sampler:
     CATEGORY = "Hidiffusion_Pro"
 
 
-    def hi_sampler(self, model, model_info, prompt, negative_prompt,  controlnet_scale,clip_skip,pre_input,
+    def hi_sampler(self, model, model_info, prompt, negative_prompt,controlnet_scale,clip_skip,pre_input,
                    seed,steps, cfg,  width,height,adapter_scale,**kwargs):
         model_type, unet_model, control_net, function_choice, lora, trigger_words, adapter_info = model_info.split(";")
         
         # control_image = np.transpose(control_image, (
         #         #     0, 3, 1, 2))  # 将comfy输入的（batch_size,channels,rows,cols）改成条件需求的（3通道，16输出，3，1 ，pading=1）
         if adapter_info!="none":
-            ip_image = kwargs["ip_image"]
+            ip_image = kwargs.get("ip_image")
             ip_image = input_size_adaptation_output(ip_image, pre_input, width, height)
             if lora != "none":
                 prompt = prompt + " " + trigger_words
             # print(model_type, unet_model, control_net, function_choice)
             if control_net == "none":
                 if function_choice == "img2img":
-                    image = kwargs["image"]
+                    image = kwargs.get("image")
                     image = input_size_adaptation_output(image, pre_input, width, height)
                     images = \
                         model.generate(prompt=prompt, negative_prompt=negative_prompt,pil_image=ip_image, image=image, scale=adapter_scale,num_inference_steps=steps,
@@ -506,8 +546,8 @@ class Hi_Sampler:
                               height=height, width=width, seed=seed, )
     
             else:
-                control_image = kwargs["control_image"]
-                if control_net == "controlnet-tile-sdxl-1.0":
+                control_image = kwargs.get("control_image")
+                if "tile" in control_net:
                     control_image = input_size_adaptation_output(control_image, pre_input, width, height)
                     controlnet_img = cv2.cvtColor(np.asarray(control_image), cv2.COLOR_RGB2BGR)
                     new_height, new_width, _ = controlnet_img.shape
@@ -579,7 +619,7 @@ class Hi_Sampler:
                               height=height, width=width, seed=seed, ).images[0]
             else:
                 control_image = kwargs["control_image"]
-                if control_net == "controlnet-tile-sdxl-1.0":
+                if "tile" in control_net:
                     control_image = input_size_adaptation_output(control_image, pre_input, width, height)
                     controlnet_img = cv2.cvtColor(np.asarray(control_image), cv2.COLOR_RGB2BGR)
                     new_height, new_width, _ = controlnet_img.shape
@@ -628,6 +668,7 @@ class Hi_Sampler:
                                       controlnet_conditioning_scale=controlnet_scale,
                                       seed=seed, ).images[0]
                 else:
+                    print("1234")
                     images = model(prompt, negative_prompt=negative_prompt, control_image=control_image,
                                   num_inference_steps=steps, guidance_scale=cfg, height=height, width=width,
                                   clip_skip=clip_skip,
@@ -639,6 +680,7 @@ class Hi_Sampler:
         if lora != "none":
             if adapter_info=="none":
                 model.unfuse_lora()
+        torch.cuda.empty_cache()
         del model
         return (output_image,)
 
