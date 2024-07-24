@@ -6,10 +6,17 @@ HiDiffusion  From: [link](https://github.com/megvii-research/HiDiffusion)
 
 Update 
 ----
+07/24
+--新增社区单体模型支持，单体controlnet模型支持   
+-- 通过菜单model_category来选择使用不同模型；   
+--VAE可以填写你喜欢的vae地址 
+--Added support for community monolithic models and monolithic ControlNet models     
+--Select different models through the menu “model_category”;  
+--VAE can fill in your favorite VAE address   
+
+--
 --增加adapter_style支持，SDXL需求的显存较大，虽然能跑CPU，但是不推荐，会爆显存，SD1.5测试没问题。  
---修复controlnet菜单的加载列表的问题；  
 --Adding adapter_style support, SDXL requires a large amount of graphics memory. Although it can run on CPU, it is not recommended as it may cause graphics memory "explosion". SD1.5 testing is not a problem.   
---Fix the issue with loading lists in the Controlnet menu;   
 
 My ComfyUI node list：
 -----
@@ -28,6 +35,10 @@ My ComfyUI node list：
 12、PBR_Maker node:[ComfyUI_PBR_Maker](https://github.com/smthemex/ComfyUI_PBR_Maker)      
 13、ComfyUI_Streamv2v_Plus node:[ComfyUI_Streamv2v_Plus](https://github.com/smthemex/ComfyUI_Streamv2v_Plus)   
 14、ComfyUI_MS_Diffusion node:[ComfyUI_MS_Diffusion](https://github.com/smthemex/ComfyUI_MS_Diffusion)   
+15、ComfyUI_AnyDoor node: [ComfyUI_AnyDoor](https://github.com/smthemex/ComfyUI_AnyDoor)  
+16、ComfyUI_Stable_Makeup node: [ComfyUI_Stable_Makeup](https://github.com/smthemex/ComfyUI_Stable_Makeup)  
+17、ComfyUI_EchoMimic node:  [ComfyUI_EchoMimic](https://github.com/smthemex/ComfyUI_EchoMimic)   
+18、ComfyUI_FollowYourEmoji node: [ComfyUI_FollowYourEmoji](https://github.com/smthemex/ComfyUI_FollowYourEmoji)   
 
 Notice（节点的特殊功能说明 Special Function Description of Nodes）  
 -----    
@@ -36,9 +47,7 @@ Notice（节点的特殊功能说明 Special Function Description of Nodes）
 --修复节点连接逻辑，现在文生图模式，无需接入image，无controlnet也无需接入control_image   
 --支持SDXL-lighting\Hyper\LCM\DMD2\的加速Unet，建议适当提高步数；    
 --基于官方的更新，加入lora支持，需要填关键词；    
---加入skip，去掉意义不大的其他参数；    
---支持所有的SDXL controlnet模型（仅支持配置config文件的diffuser加载模式）；         
---你可以修改model.yaml文件，添加其他的可能支持SDXL“扩散模型”或者“controlnet”或者SDXL“unet”模型；                 
+--加入skip，去掉意义不大的其他参数；                       
 
 -- add manne lighting lora  
 --Added support for control net file sdxl, built-in image preprocessing, default size of 512, and added condition control for apply_window_attn.   
@@ -46,8 +55,6 @@ Notice（节点的特殊功能说明 Special Function Description of Nodes）
 --Support acceleration Unet for SDXL lighting, Hyper, LCM, and DMD2. It is recommended to increase the number of steps appropriately;   
 --Based on official updates, adding support for Lora requires filling in keywords;   
 --Add skip and remove other parameters that are not significant;   
---Supports all SDXL controllnet models (only supports diffuser loading mode for configuring config files);   
---You can modify the model.yaml file and add other models that may support SDXL "diffusion models" or "controllnet" or SDXL "unet" models;   
 
 
 1.Installation
@@ -61,28 +68,20 @@ Notice（节点的特殊功能说明 Special Function Description of Nodes）
   
 2.requirements  
 ----
-diffusers >=0.28.0    
+diffusers >=0.28.0   is best 
 yaml
 
 3 About models    
 ----
-  3种调用模型节点的方法   
-  一种是:在repo_id填写诸如"stabilityai/stable-diffusion-xl-base-1.0" 这样的标准抱脸的repo_id,系统会自己下载或者查找.cache路径，这个要开全局外网或者你开启了hf镜像  
-  
-  一种是:把你下载好的模型放在comfyUI的"models/diffusers"路径下，记得不要改最尾的模型路径名“比如stable-diffusion-xl-base-1.0”，就可以用菜单直接调用。（注意：要用菜单的方式，必须删掉repo_id默认的"stabilityai/stable-diffusion-xl-base-1.0"，让repo_id留空，controlnet_id一样，要调用菜单，必须留空controlnet_id） 
-  
-  一种是:你在repo_id或controlnet_id直接填写诸如“x:/xx/xx/stabilityai/stable-diffusion-xl-base-1.0” 这样的已经下载好的扩散模型的绝对路径也能用
+3.1 使用社区单体模型  Using the Community Monomer Model  
 
-  Three methods for calling model nodes   
-  Filling in the corresponding repo_id will download the model   
-  or   
-  in the diffuse directory, store and use the downloaded model  （Notice:in this method,repo_id or controlnet_repo_id must be empty）  
-  or  
-  using repo_id,and Fill in the absolute path of your diffusers model,using"/"   
-
-controlnet模型存放示例：
+3.2 填写repo_id 和controlnet_repo_id     
+    可以是stabilityai/stable-diffusion-xl-base-1.0   
+    也可是“x:/xx/xx/stabilityai/stable-diffusion-xl-base-1.0”   
+ 
+controlnet_repo_id 如果使用controlnet_repo_id，本地模型存放示例：
 ```
-├── ComfyUI/models/diffusers/   
+├── your path/   
 |     ├──xinsir/controlnet-openpose-sdxl-1.0    
 |         ├── config.json   
 |         ├── diffusion_pytorch_model.fp16.safetensors   
@@ -106,13 +105,13 @@ ip_adapter model 模型存放示例：
 
 如果不存放对应，运行时会自动下载。  If the corresponding file is not stored, it will be automatically downloaded at runtime.  
 ```
-├── ComfyUI/custom_nodes/ComfyUI_HiDiffusion_Pro/weights/  
-|     ├──models
+├── ComfyUI/models/photomaker
+|     ├──models/
 |         ├── ip-adapter_sd15.bin
 |         ├── image_encoder/
 |             ├── config.json
 |             ├── model.safetensors
-|     ├──sdxl_models
+|     ├──sdxl_models/
 |         ├── ip-adapter_sdxl.bin
 |         ├── image_encoder/
 |             ├── config.json
@@ -127,24 +126,18 @@ For partially supported models, please refer to the model.yaml file
 
 5 example
 -----
- txt2img using ip_adapter_style
- ![](https://github.com/smthemex/ComfyUI_HiDiffusion_Pro/blob/main/example/ipadapter.png)
+ sd1.5 using ip_adapter_style  使用ip_adapter_style  
+ ![](https://github.com/smthemex/ComfyUI_HiDiffusion_Pro/blob/main/example/sd15ipstyle.png)
 
-img2img use controlnet and lora     图生图加controlnet和lora   
-![](https://github.com/smthemex/ComfyUI_HiDiffusion_Pro/blob/main/example/img2imgcontrolnetlora.png)
+img2img use  lora     图生图和lora   
+![](https://github.com/smthemex/ComfyUI_HiDiffusion_Pro/blob/main/example/img2img_lora.png)
 
-use inpainting XL model  内绘  
-![](https://github.com/smthemex/ComfyUI_HiDiffusion_Pro/blob/main/example/inpainting.png)
 
-txt2img  use XL/sd1.5/XL turbo/background...    文生图   
-![](https://github.com/smthemex/ComfyUI_HiDiffusion_Pro/blob/main/example/txt2img.png)
-
-txt2img + controlnet  文生图加controlnet  .     
-![](https://github.com/smthemex/ComfyUI_HiDiffusion_Pro/blob/main/example/txt2imgcontrolnet.png
- )
+img2img + controlnet  图生图加controlnet      
+![](https://github.com/smthemex/ComfyUI_HiDiffusion_Pro/blob/main/example/controlnet_img2img.png)
 
 img2img  use Hyper unet   图生图加加速unet   
-![](https://github.com/smthemex/ComfyUI_HiDiffusion_Pro/blob/main/example/img2imgunet.png)
+![](https://github.com/smthemex/ComfyUI_HiDiffusion_Pro/blob/main/example/lightingUnet.png)
 
 6 Citation
 ------
