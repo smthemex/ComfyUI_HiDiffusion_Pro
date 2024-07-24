@@ -1,0 +1,257 @@
+{
+  "last_node_id": 13,
+  "last_link_id": 23,
+  "nodes": [
+    {
+      "id": 3,
+      "type": "PreviewImage",
+      "pos": [
+        1844,
+        106
+      ],
+      "size": {
+        "0": 324.51751708984375,
+        "1": 409.1744079589844
+      },
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 3,
+          "label": "images"
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "PreviewImage"
+      }
+    },
+    {
+      "id": 11,
+      "type": "LoadImage",
+      "pos": [
+        957,
+        449
+      ],
+      "size": {
+        "0": 315,
+        "1": 314
+      },
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            23
+          ],
+          "shape": 3,
+          "label": "IMAGE",
+          "slot_index": 0
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null,
+          "shape": 3,
+          "label": "MASK"
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "gakki.png",
+        "image"
+      ]
+    },
+    {
+      "id": 2,
+      "type": "Hi_Sampler",
+      "pos": [
+        1375,
+        102
+      ],
+      "size": {
+        "0": 426.9151916503906,
+        "1": 539.4885864257812
+      },
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 8,
+          "label": "model"
+        },
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 23,
+          "label": "image",
+          "slot_index": 1
+        },
+        {
+          "name": "control_image",
+          "type": "IMAGE",
+          "link": null,
+          "label": "control_image",
+          "slot_index": 2
+        },
+        {
+          "name": "ip_image",
+          "type": "IMAGE",
+          "link": null,
+          "label": "ip_image"
+        },
+        {
+          "name": "model_info",
+          "type": "STRING",
+          "link": 9,
+          "widget": {
+            "name": "model_info"
+          },
+          "label": "model_info"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            3
+          ],
+          "shape": 3,
+          "label": "image",
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "Hi_Sampler"
+      },
+      "widgets_values": [
+        "",
+        "a girl,8k,smile,best quality",
+        "text, watermark, lowres, low quality, worst quality, deformed, glitch, low contrast, noisy, saturation, blurry",
+        1,
+        2,
+        512,
+        517821854822938,
+        "randomize",
+        15,
+        1,
+        2048,
+        2048,
+        1
+      ]
+    },
+    {
+      "id": 6,
+      "type": "HI_Diffusers_Model_Loader",
+      "pos": [
+        882,
+        4
+      ],
+      "size": [
+        406.1136180045023,
+        397.74244861321404
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "links": [
+            8
+          ],
+          "shape": 3,
+          "label": "model",
+          "slot_index": 0
+        },
+        {
+          "name": "model_info",
+          "type": "STRING",
+          "links": [
+            9
+          ],
+          "shape": 3,
+          "label": "model_info",
+          "slot_index": 1
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "HI_Diffusers_Model_Loader"
+      },
+      "widgets_values": [
+        "",
+        "",
+        "",
+        "sdxl",
+        "img2img",
+        "0SDXL\\sd_xl_base_1.0.safetensors",
+        "sdxl_lightning_8step_unet.safetensors",
+        "none",
+        "none",
+        0.8,
+        "papercutouts",
+        "LCM",
+        false,
+        false
+      ]
+    }
+  ],
+  "links": [
+    [
+      3,
+      2,
+      0,
+      3,
+      0,
+      "IMAGE"
+    ],
+    [
+      8,
+      6,
+      0,
+      2,
+      0,
+      "MODEL"
+    ],
+    [
+      9,
+      6,
+      1,
+      2,
+      4,
+      "STRING"
+    ],
+    [
+      23,
+      11,
+      0,
+      2,
+      1,
+      "IMAGE"
+    ]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 1.351305709310398,
+      "offset": [
+        -817.1815786166263,
+        48.95769072184135
+      ]
+    }
+  },
+  "version": 0.4
+}

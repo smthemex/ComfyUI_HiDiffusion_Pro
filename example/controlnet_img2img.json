@@ -1,0 +1,316 @@
+{
+  "last_node_id": 13,
+  "last_link_id": 20,
+  "nodes": [
+    {
+      "id": 3,
+      "type": "PreviewImage",
+      "pos": [
+        1844,
+        106
+      ],
+      "size": {
+        "0": 324.51751708984375,
+        "1": 409.1744079589844
+      },
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 3,
+          "label": "images"
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "PreviewImage"
+      }
+    },
+    {
+      "id": 2,
+      "type": "Hi_Sampler",
+      "pos": [
+        1375,
+        102
+      ],
+      "size": [
+        426.91519965565635,
+        539.4886167337604
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 8,
+          "label": "model"
+        },
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 18,
+          "label": "image",
+          "slot_index": 1
+        },
+        {
+          "name": "control_image",
+          "type": "IMAGE",
+          "link": 20,
+          "label": "control_image",
+          "slot_index": 2
+        },
+        {
+          "name": "ip_image",
+          "type": "IMAGE",
+          "link": null,
+          "label": "ip_image"
+        },
+        {
+          "name": "model_info",
+          "type": "STRING",
+          "link": 9,
+          "widget": {
+            "name": "model_info"
+          },
+          "label": "model_info"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            3
+          ],
+          "shape": 3,
+          "label": "image",
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "Hi_Sampler"
+      },
+      "widgets_values": [
+        "",
+        "a girl,8k,smile,best quality",
+        "text, watermark, lowres, low quality, worst quality, deformed, glitch, low contrast, noisy, saturation, blurry",
+        1,
+        1,
+        512,
+        692122266219940,
+        "randomize",
+        30,
+        7.5,
+        2048,
+        2048,
+        1
+      ]
+    },
+    {
+      "id": 11,
+      "type": "LoadImage",
+      "pos": [
+        937,
+        633
+      ],
+      "size": [
+        315,
+        314.00000381469727
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            18,
+            19
+          ],
+          "shape": 3,
+          "label": "IMAGE",
+          "slot_index": 0
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null,
+          "shape": 3,
+          "label": "MASK"
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "gakki.png",
+        "image"
+      ]
+    },
+    {
+      "id": 6,
+      "type": "HI_Diffusers_Model_Loader",
+      "pos": [
+        874,
+        43
+      ],
+      "size": {
+        "0": 408.3705139160156,
+        "1": 520.1036987304688
+      },
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "links": [
+            8
+          ],
+          "shape": 3,
+          "label": "model",
+          "slot_index": 0
+        },
+        {
+          "name": "model_info",
+          "type": "STRING",
+          "links": [
+            9
+          ],
+          "shape": 3,
+          "label": "model_info",
+          "slot_index": 1
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "HI_Diffusers_Model_Loader"
+      },
+      "widgets_values": [
+        "",
+        "",
+        "",
+        "sdxl",
+        "img2img",
+        "0SDXL\\sd_xl_base_1.0.safetensors",
+        "none",
+        "diffusers_xl_canny_full.safetensors",
+        "none",
+        0.8,
+        "best quality",
+        "DDIM",
+        false,
+        false
+      ]
+    },
+    {
+      "id": 13,
+      "type": "Canny",
+      "pos": [
+        1324,
+        704
+      ],
+      "size": {
+        "0": 315,
+        "1": 82
+      },
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 19,
+          "label": "image"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            20
+          ],
+          "shape": 3,
+          "label": "IMAGE",
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "Canny"
+      },
+      "widgets_values": [
+        0.4,
+        0.8
+      ]
+    }
+  ],
+  "links": [
+    [
+      3,
+      2,
+      0,
+      3,
+      0,
+      "IMAGE"
+    ],
+    [
+      8,
+      6,
+      0,
+      2,
+      0,
+      "MODEL"
+    ],
+    [
+      9,
+      6,
+      1,
+      2,
+      4,
+      "STRING"
+    ],
+    [
+      18,
+      11,
+      0,
+      2,
+      1,
+      "IMAGE"
+    ],
+    [
+      19,
+      11,
+      0,
+      13,
+      0,
+      "IMAGE"
+    ],
+    [
+      20,
+      13,
+      0,
+      2,
+      2,
+      "IMAGE"
+    ]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 1.015255979947708,
+      "offset": [
+        -467.9625888720718,
+        108.60503628092587
+      ]
+    }
+  },
+  "version": 0.4
+}
