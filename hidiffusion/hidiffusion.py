@@ -1930,7 +1930,8 @@ def hook_diffusion_model(model: torch.nn.Module):
 def apply_hidiffusion(
         model: torch.nn.Module,
         apply_raunet: bool = True,
-        apply_window_attn: bool = True):
+        apply_window_attn: bool = True,
+        model_type_str:str="sdxl"):
     """
     model: diffusers model. We support SD 1.5, 2.1, XL, XL Turbo.
 
@@ -1957,13 +1958,8 @@ def apply_hidiffusion(
 
     # Hack, avoid non-square problem. See unet_2d_condition.py in diffusers
     diffusion_model.num_upsamplers += 12
-
-    name_or_path = model.name_or_path
-    count = name_or_path.count('/')
-    if count > 1:  # 输入本地路径时，对模型名进行处理
-        x = name_or_path.rsplit('/', 2)[-2:]
-        name_or_path = '/'.join((x[0], x[1]))
-    print(name_or_path)
+    name_or_path=model_type_str
+    #name_or_path = model.name_or_path
     diffusion_model_module_key = []
     if name_or_path not in supported_official_model:
         for key, module in diffusion_model.named_modules():
@@ -1978,8 +1974,8 @@ def apply_hidiffusion(
         'upsample_size': None,
         'hooks': [],
         'text_to_img_controlnet': hasattr(model, 'controlnet'),
-        'is_inpainting_task': 'inpainting' in model.name_or_path,
-        'is_playground': 'playground' in model.name_or_path,
+        'is_inpainting_task': 'inpainting' in model_type_str,
+        'is_playground': 'playground' in model_type_str,
         'pipeline': model}
     model.info = diffusion_model.info
     hook_diffusion_model(diffusion_model)
@@ -2068,7 +2064,7 @@ def remove_hidiffusion(model: torch.nn.Module):
     """ Removes hidiffusion from a Diffusion module if it was already patched. """
     # For diffusers
     model = model.unet if hasattr(model, "unet") else model
-
+    #print(model.named_modules(),type(model.named_modules()))
     for _, module in model.named_modules():
         if hasattr(module, "info"):
             for hook in module.info["hooks"]:
