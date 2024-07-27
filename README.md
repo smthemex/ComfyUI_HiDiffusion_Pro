@@ -6,6 +6,9 @@ HiDiffusion  From: [link](https://github.com/megvii-research/HiDiffusion)
 
 Update 
 ----
+07/27
+修复模型加载过慢的问题
+
 07/24
 --新增社区单体模型支持，单体controlnet模型支持   
 -- 通过菜单model_category来选择使用不同模型；   
@@ -83,23 +86,11 @@ controlnet_repo_id 如果使用controlnet_repo_id，本地模型存放示例：
 ```
 ├── your path/   
 |     ├──xinsir/controlnet-openpose-sdxl-1.0    
-|         ├── config.json   
-|         ├── diffusion_pytorch_model.fp16.safetensors   
 |     ├──xinsir/controlnet-scribble-sdxl-1.0   
-|         ├── config.json   
-|         ├── diffusion_pytorch_model.fp16.safetensors
 |     ├──xinsir/controlnet-tile-sdxl-1.0  
-|         ├── config.json   
-|         ├── diffusion_pytorch_model.fp16.safetensors  
 |     ├──diffusers/controlnet-canny-sdxl-1.0   
-|         ├── config.json   
-|         ├── diffusion_pytorch_model.fp16.safetensors   
 |     ├──diffusers/controlnet-depth-sdxl-1.0   
-|         ├── config.json   
-|         ├── diffusion_pytorch_model.fp16.safetensors
 |     ├──TheMistoAI/MistoLine 
-|         ├── config.json   
-|         ├── diffusion_pytorch_model.fp16.safetensors
 ```
 ip_adapter model 模型存放示例： 
 
@@ -117,7 +108,6 @@ ip_adapter model 模型存放示例：
 |             ├── config.json
 |             ├── model.safetensors
 ```
-
 
 4 other
 ----
