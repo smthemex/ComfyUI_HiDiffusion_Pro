@@ -2,7 +2,7 @@
 name = "comfyui_hidiffusion_pro"
 description = "A HiDiffusion node for ComfyUI."
 version = "1.0.0"
-license = "LICENSE"
+license = { file = "LICENSE" }
 
 [project.urls]
 Repository = "https://github.com/smthemex/ComfyUI_HiDiffusion_Pro"
