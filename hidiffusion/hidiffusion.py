@@ -16,7 +16,7 @@ import warnings
 
 dif_version = str(diffusers.__version__)
 dif_version_int= int(dif_version.split(".")[1])
-if dif_version_int>27:
+if dif_version_int>=27:
     from diffusers.models.unets.unet_2d_condition import UNet2DConditionOutput
     old_diffusers = False
 else:
