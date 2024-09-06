@@ -237,32 +237,35 @@ class HI_Diffusers_Model_Loader:
             
         if model_category=="sd15" or model_category=="sd21"  :
             model_type="stable-diffusion-v1-5"
+            model_config="Lykon/dreamshaper-8"
             if not repo_id: # using single model
                 original_config_file = os.path.join(folder_paths.models_dir, "configs", "v1-inference.yaml")
                 if dif_version_int >= 28:
                     model = StableDiffusionPipeline.from_single_file(
-                        ckpt_path, original_config=original_config_file, torch_dtype=torch.float16).to("cuda")
+                        ckpt_path, config=model_config,original_config=original_config_file, torch_dtype=torch.float16).to("cuda")
                 else:
                     model = StableDiffusionPipeline.from_single_file(
-                        ckpt_path, original_config_file=original_config_file, torch_dtype=torch.float16).to("cuda")
+                        ckpt_path,config=model_config, original_config_file=original_config_file, torch_dtype=torch.float16).to("cuda")
             else:
                 model = DiffusionPipeline.from_pretrained(repo_id,torch_dtype=torch.float16).to("cuda")
         elif model_category=="ghibli":
             model_type = "stable-diffusion-xl-base-1.0"
+            model_config = "stabilityai/stable-diffusion-xl-base-1.0"
             if not repo_id:
-                model = StableDiffusionPipeline.from_single_file(ckpt_path,torch_dtype=torch.float16, ).to("cuda")
+                model = StableDiffusionPipeline.from_single_file(ckpt_path,config=model_config,torch_dtype=torch.float16, ).to("cuda")
             else:
                 model = StableDiffusionPipeline.from_pretrained(repo_id, torch_dtype=torch.float16, ).to("cuda")
         elif model_category=="xl_turbo":
             model_type = "sdxl-turbo"
+            model_config = "stabilityai/stable-diffusion-xl-base-1.0"
             if not repo_id:
                 original_config_file = os.path.join(dir_path, "weights", "sd_xl_base.yaml")
                 if dif_version_int >= 28:
                     model = StableDiffusionXLPipeline.from_single_file(
-                        ckpt_path, original_config=original_config_file, torch_dtype=torch.float16).to("cuda")
+                        ckpt_path, config=model_config,original_config=original_config_file, torch_dtype=torch.float16).to("cuda")
                 else:
                     model = StableDiffusionXLPipeline.from_single_file(
-                        ckpt_path, original_config_file=original_config_file, torch_dtype=torch.float16).to("cuda")
+                        ckpt_path, config=model_config,original_config_file=original_config_file, torch_dtype=torch.float16).to("cuda")
             else:
                 if function_choice == "img2img":
                     model = AutoPipelineForImage2Image.from_pretrained(repo_id, torch_dtype=torch.float16,
@@ -272,23 +275,25 @@ class HI_Diffusers_Model_Loader:
                                                                      ).to('cuda')
         elif model_category=="playground":
             model_type = "playground-v2-1024px-aesthetic"
+            model_config ="playgroundai/playground-v2.5-1024px-aesthetic"
             if not repo_id:
-                model = StableDiffusionXLPipeline.from_single_file(ckpt_path,torch_dtype=torch.float16).to("cuda")
+                model = StableDiffusionXLPipeline.from_single_file(ckpt_path, config=model_config,torch_dtype=torch.float16).to("cuda")
             else:
                 model = DiffusionPipeline.from_pretrained(repo_id,torch_dtype=torch.float16,).to("cuda")
         elif model_category == "inpainting":
-            model_type = "stable-diffusion-xl-1.0-inpainting-0.1"
+            model_config = "stable-diffusion-xl-1.0-inpainting-0.1"
+            "diffusers/stable-diffusion-xl-1.0-inpainting-0.1"
             control_model_type="stable-diffusion-xl-1.0-inpainting-0.1"
             if not controlnet_repo_id:
                 original_config_file = os.path.join(dir_path, "weights", "sd_xl_base.yaml")
                 if controlnet_model!="none" and "inpaint" in controlnet_model :
                     if dif_version_int >= 28:
-                        model = StableDiffusionXLInpaintPipeline.from_single_file(ckpt_path,
+                        model = StableDiffusionXLInpaintPipeline.from_single_file(ckpt_path,config=model_config,
                                                                                   original_config=original_config_file,
                                                                                   torch_dtype=torch.float16,
                                                                                 )
                     else:
-                        model = StableDiffusionXLInpaintPipeline.from_single_file(ckpt_path,
+                        model = StableDiffusionXLInpaintPipeline.from_single_file(ckpt_path,config=model_config,
                                                                                   original_config_file=original_config_file,
                                                                                   torch_dtype=torch.float16,
                                                                                  )
@@ -306,14 +311,15 @@ class HI_Diffusers_Model_Loader:
                     model.unet.load_state_dict(load_file(ckpt), strict=False, )
         else:
             model_type = "stable-diffusion-xl-base-1.0"
+            model_config = "stabilityai/stable-diffusion-xl-base-1.0"
             if not repo_id:
                 original_config_file = os.path.join(dir_path, "weights", "sd_xl_base.yaml")
                 if dif_version_int >= 28:
                     model = StableDiffusionXLPipeline.from_single_file(
-                        ckpt_path, original_config=original_config_file, torch_dtype=torch.float16)
+                        ckpt_path, config=model_config,original_config=original_config_file, torch_dtype=torch.float16)
                 else:
                     model = StableDiffusionXLPipeline.from_single_file(
-                        ckpt_path, original_config_file=original_config_file, torch_dtype=torch.float16)
+                        ckpt_path,config=model_config, original_config_file=original_config_file, torch_dtype=torch.float16)
                 if control_model_type!="none":
                     if not controlnet_repo_id:
                         controlnet = ControlNetModel.from_unet(model.unet)
