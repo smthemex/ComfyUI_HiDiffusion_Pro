@@ -1,7 +1,7 @@
 [project]
 name = "comfyui_hidiffusion_pro"
 description = "A HiDiffusion node for ComfyUI."
-version = "1.0.0"
+version = "1.0.1"
 license = { file = "LICENSE" }
 
 [project.urls]
@@ -9,6 +9,6 @@ Repository = "https://github.com/smthemex/ComfyUI_HiDiffusion_Pro"
 #  Used by Comfy Registry https://comfyregistry.org
 
 [tool.comfy]
-PublisherId = "smthem"
+PublisherId = "smthemex"
 DisplayName = "ComfyUI_HiDiffusion_Pro"
 Icon = ""

@@ -6,40 +6,27 @@ HiDiffusion  From: [link](https://github.com/megvii-research/HiDiffusion)
 
 Update 
 ----
-09/06   
-fix runway error/修复bug  
 
-07/27
-修复模型加载过慢的问题
+**09/07**   
+*fix runway error/del repo /auto choice model type  
+*修复runwaybug / 去掉repo加载模型的方式  /自动选择模型的类别   s
 
-07/24
---新增社区单体模型支持，单体controlnet模型支持   
--- 通过菜单model_category来选择使用不同模型；   
---VAE可以填写你喜欢的vae地址 
---Added support for community monolithic models and monolithic ControlNet models     
---Select different models through the menu “model_category”;  
---VAE can fill in your favorite VAE address   
-
---
---增加adapter_style支持，SDXL需求的显存较大，虽然能跑CPU，但是不推荐，会爆显存，SD1.5测试没问题。  
---Adding adapter_style support, SDXL requires a large amount of graphics memory. Although it can run on CPU, it is not recommended as it may cause graphics memory "explosion". SD1.5 testing is not a problem.   
-
-
-Notice（节点的特殊功能说明 Special Function Description of Nodes）  
------    
--- 增加 manne加速Lora  
--- 加入controlnet-tile-sdxl的支持，内置图片预处理，默认512尺寸，新增apply_window_attn 条件控制。  
---修复节点连接逻辑，现在文生图模式，无需接入image，无controlnet也无需接入control_image   
---支持SDXL-lighting\Hyper\LCM\DMD2\的加速Unet，建议适当提高步数；    
---基于官方的更新，加入lora支持，需要填关键词；    
---加入skip，去掉意义不大的其他参数；                       
-
--- add manne lighting lora  
---Added support for control net file sdxl, built-in image preprocessing, default size of 512, and added condition control for apply_window_attn.   
---Fix node connection logic, now in text-based graphics mode, there is no need to connect to image, no controllnet, and no need to connect to controll_image   
---Support acceleration Unet for SDXL lighting, Hyper, LCM, and DMD2. It is recommended to increase the number of steps appropriately;   
---Based on official updates, adding support for Lora requires filling in keywords;   
---Add skip and remove other parameters that are not significant;   
+**Previous updates**
+* 增加adapter_style支持，SDXL需求的显存较大，虽然能跑CPU，但是不推荐，会爆显存，SD1.5测试没问题。  
+* 增加 manne加速Lora  
+* 加入controlnet-tile-sdxl的支持，内置图片预处理，默认512尺寸，新增apply_window_attn 条件控制。  
+* 修复节点连接逻辑，现在文生图模式，无需接入image，无controlnet也无需接入control_image   
+* 支持SDXL-lighting\Hyper\LCM\DMD2\的加速Unet，建议适当提高步数；    
+* 基于官方的更新，加入lora支持，需要填关键词；    
+* 加入skip，去掉意义不大的其他参数；          
+             
+* Adding adapter_style support, SDXL requires a large amount of graphics memory. Although it can run on CPU, it is not recommended as it may cause graphics memory " explosion". SD1.5 testing is not a problem.   
+* add manne lighting lora  
+* Added support for control net file sdxl, built-in image preprocessing, default size of 512, and added condition control for apply_window_attn.   
+* Fix node connection logic, now in text-based graphics mode, there is no need to connect to image, no controllnet, and no need to connect to controll_image   
+* Support acceleration Unet for SDXL lighting, Hyper, LCM, and DMD2. It is recommended to increase the number of steps appropriately;   
+* Based on official updates, adding support for Lora requires filling in keywords;   
+* Add skip and remove other parameters that are not significant;   
 
 
 1.Installation
@@ -53,29 +40,29 @@ Notice（节点的特殊功能说明 Special Function Description of Nodes）
   
 2.requirements  
 ----
-diffusers >=0.28.0   is best 
+diffusers >=0.28.0   #is best 
 yaml
 
-3 About models    
+3 About models     
 ----
-3.1 使用社区单体模型  Using the Community Monomer Model  
-
-3.2 填写repo_id 和controlnet_repo_id     
-    可以是stabilityai/stable-diffusion-xl-base-1.0   
-    也可是“x:/xx/xx/stabilityai/stable-diffusion-xl-base-1.0”   
- 
-controlnet_repo_id 如果使用controlnet_repo_id，本地模型存放示例：
+3.1 base ckpt  
 ```
-├── your path/   
-|     ├──xinsir/controlnet-openpose-sdxl-1.0    
-|     ├──xinsir/controlnet-scribble-sdxl-1.0   
-|     ├──xinsir/controlnet-tile-sdxl-1.0  
-|     ├──diffusers/controlnet-canny-sdxl-1.0   
-|     ├──diffusers/controlnet-depth-sdxl-1.0   
-|     ├──TheMistoAI/MistoLine 
+├──comfyUI/models/checkpoints/   
+|     ├──sd1.5 or sd2.1 or sdxl  or playground   
+├──comfyUI/models/vae/   
+|     ├──any vae fit ckpt 
 ```
-ip_adapter model 模型存放示例： 
-
+3.2 if using SDXL controlnet     
+```
+├──comfyUI/models/controlnet/   
+|     ├──any SDXL controlnet
+```
+3.3 if using lighting  Unet   
+```
+├──comfyUI/models/unet/   
+|     ├──any SDXL lighting  Unet 
+```
+3.4 if using adapter style   
 如果不存放对应，运行时会自动下载。  If the corresponding file is not stored, it will be automatically downloaded at runtime.  
 ```
 ├── ComfyUI/models/photomaker
@@ -91,13 +78,12 @@ ip_adapter model 模型存放示例：
 |             ├── model.safetensors
 ```
 
-4 other
-----
-部分支持的模型请查看model.yaml 文件    
-For partially supported models, please refer to the model.yaml file   
-
-5 example
+4 example
 -----
+
+new workflow example  最新的示例
+ ![](https://github.com/smthemex/ComfyUI_HiDiffusion_Pro/blob/main/example/new.png)
+
  sd1.5 using ip_adapter_style  使用ip_adapter_style  
  ![](https://github.com/smthemex/ComfyUI_HiDiffusion_Pro/blob/main/example/sd15ipstyle.png)
 
