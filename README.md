@@ -84,17 +84,17 @@ new workflow example   new
  ![](https://github.com/smthemex/ComfyUI_HiDiffusion_Pro/blob/main/example/new.png)
 
  sd1.5 using ip_adapter_style  使用ip_adapter_style  
- ![](https://github.com/smthemex/ComfyUI_HiDiffusion_Pro/blob/main/example/sd15ipstyle.png)
+ ![](https://github.com/smthemex/ComfyUI_HiDiffusion_Pro/blob/main/example/sd15ipstyle1.png)
 
 img2img use  lora     图生图和lora   
-![](https://github.com/smthemex/ComfyUI_HiDiffusion_Pro/blob/main/example/img2img_lora.png)
+![](https://github.com/smthemex/ComfyUI_HiDiffusion_Pro/blob/main/example/img2img_lora1.png)
 
 
 img2img + controlnet  图生图加controlnet      
-![](https://github.com/smthemex/ComfyUI_HiDiffusion_Pro/blob/main/example/controlnet_img2img.png)
+![](https://github.com/smthemex/ComfyUI_HiDiffusion_Pro/blob/main/example/controlnet_img2img1.png)
 
 img2img  use Hyper unet   图生图加加速unet   
-![](https://github.com/smthemex/ComfyUI_HiDiffusion_Pro/blob/main/example/lightingUnet.png)
+![](https://github.com/smthemex/ComfyUI_HiDiffusion_Pro/blob/main/example/lightingUnet1.png)
 
 6 Citation
 ------
