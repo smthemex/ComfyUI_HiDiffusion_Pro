@@ -5,7 +5,6 @@ import torch
 import os
 from PIL import Image
 import numpy as np
-import sys
 from diffusers import (StableDiffusionXLPipeline, DiffusionPipeline, DDIMScheduler, ControlNetModel,
                        KDPM2AncestralDiscreteScheduler, LMSDiscreteScheduler,
                        AutoPipelineForInpainting, DPMSolverMultistepScheduler, DPMSolverSinglestepScheduler,
@@ -15,16 +14,17 @@ from diffusers import (StableDiffusionXLPipeline, DiffusionPipeline, DDIMSchedul
                        EulerAncestralDiscreteScheduler, UniPCMultistepScheduler, AutoencoderKL,
                        StableDiffusionXLControlNetPipeline, DDPMScheduler, TCDScheduler, LCMScheduler,
                        StableDiffusionPipeline, StableDiffusionControlNetPipeline, StableDiffusionXLInpaintPipeline)
-from diffusers.models.unets import unet_2d_condition
 from diffusers.loaders.single_file_utils import load_single_file_checkpoint,infer_diffusers_model_type
-from huggingface_hub import hf_hub_download
 
 from .hidiffusion.hidiffusion import apply_hidiffusion,remove_hidiffusion
 import folder_paths
-from safetensors.torch import load_file, load
+from safetensors.torch import load_file
 import yaml
 import diffusers
 import random
+from omegaconf import OmegaConf
+from comfy.model_management import cleanup_models
+from comfy.clip_vision import load as load_clip
 
 dif_version = str(diffusers.__version__)
 dif_version_int = int(dif_version.split(".")[1])
@@ -76,7 +76,6 @@ lcm_unet = ["dmd2_sdxl_4step_unet_fp16.bin", "dmd2_sdxl_1step_unet_fp16.bin", "l
             "Hyper-SDXL-1step-Unet.safetensors"]
 
 def tensor_to_image(tensor):
-    #tensor = tensor.cpu()
     image_np = tensor.squeeze().mul(255).clamp(0, 255).byte().numpy()
     image = Image.fromarray(image_np, mode='RGB')
     return image
@@ -161,31 +160,6 @@ def get_sheduler(name):
     return scheduler
 
 
-def get_local_path(file_path, model_path):
-    path = os.path.join(file_path, "models", "diffusers", model_path)
-    model_path = os.path.normpath(path)
-    if sys.platform == 'win32':
-        model_path = model_path.replace('\\', "/")
-    return model_path
-
-
-def get_instance_path(path):
-    instance_path = os.path.normpath(path)
-    if sys.platform == 'win32':
-        instance_path = instance_path.replace('\\', "/")
-    return instance_path
-
-
-def instance_path(path, repo):
-    if repo == "":
-        if path == "none":
-            repo = "none"
-        else:
-            model_path = get_local_path(file_path, path)
-            repo = get_instance_path(model_path)
-    return repo
-
-
 class HI_Diffusers_Model_Loader:
     def __init__(self):
         pass
@@ -204,7 +178,9 @@ class HI_Diffusers_Model_Loader:
                 "trigger_words": ("STRING", {"default": "best quality"}),
                 "scheduler": (scheduler_list,),
                 "apply_window_attn":("BOOLEAN", {"default": False},),
-                "ip_adapter": ("BOOLEAN", {"default": False},),
+                "ip_ckpt": (["none"] + folder_paths.get_filename_list("photomaker"),),
+                "clip_vision": (["none"] + folder_paths.get_filename_list("clip_vision"),),
+                
             }
         }
      
@@ -215,7 +191,7 @@ class HI_Diffusers_Model_Loader:
     CATEGORY = "Hidiffusion_Pro"
 
     def loader_models(self,function_choice, ckpt_name,vae_id,unet_model, controlnet_model,
-                      lora,lora_scale,trigger_words,scheduler,apply_window_attn,ip_adapter):
+                      lora,lora_scale,trigger_words,scheduler,apply_window_attn,ip_ckpt,clip_vision):
         
         ckpt_path = folder_paths.get_full_path("checkpoints", ckpt_name) if ckpt_name!="none" else None
         sd_type=""
@@ -223,22 +199,15 @@ class HI_Diffusers_Model_Loader:
             sd = load_single_file_checkpoint(ckpt_path)
             sd_type = infer_diffusers_model_type(sd)
             del sd
-            
-        
+    
         vae_id=vae_id if vae_id!="none" else None
         controlnet_path=folder_paths.get_full_path("controlnet", controlnet_model) if controlnet_model!="none" else None
         unet_ckpt = folder_paths.get_full_path("unet", unet_model)  if unet_model!="none" else None
+        ip_ckpt = folder_paths.get_full_path("photomaker", ip_ckpt) if ip_ckpt != "none" else None
+        clip_vision = folder_paths.get_full_path("clip_vision", clip_vision) if clip_vision != "none" else None
         
         scheduler_used = get_sheduler(scheduler)
         
-        ip_path = os.path.join(folder_paths.models_dir, "photomaker")
-        sdxl_models_pre = os.path.join(ip_path, "sdxl_models", "image_encoder")
-        if not os.path.exists(sdxl_models_pre):
-            os.makedirs(sdxl_models_pre)
-        sd_models_pre = os.path.join(ip_path, "models", "image_encoder")
-        if not os.path.exists(sd_models_pre):
-            os.makedirs(sd_models_pre)
-            
         if sd_type == "v1" or sd_type == "v2":
             model_type="stable-diffusion-v1-5"
             model_config=os.path.join(dir_path,"sd15_config")
@@ -281,7 +250,7 @@ class HI_Diffusers_Model_Loader:
             
             if dif_version_int >= 28:
                 model = StableDiffusionXLPipeline.from_single_file(
-                    pretrained_model_link_or_path=ckpt_path, config=model_config,original_config=original_config_file, torch_dtype=torch.float16)
+                    ckpt_path, config=model_config,original_config=original_config_file, torch_dtype=torch.float16)
             else:
                 model = StableDiffusionXLPipeline.from_single_file(
                     ckpt_path,config=model_config, original_config_file=original_config_file, torch_dtype=torch.float16)
@@ -290,6 +259,7 @@ class HI_Diffusers_Model_Loader:
                 controlnet = ControlNetModel.from_unet(model.unet)
                 cn_state_dict = load_file(controlnet_path)
                 controlnet.load_state_dict(cn_state_dict, strict=False)
+                controlnet.to(torch.float16)
                 if function_choice == "img2img":
                     model = StableDiffusionXLControlNetImg2ImgPipeline.from_single_file(ckpt_path,config=model_config,original_config=original_config_file,controlnet=controlnet,
                                                                                        torch_dtype=torch.float16,
@@ -324,7 +294,6 @@ class HI_Diffusers_Model_Loader:
         
         if lora!="none":
             lora_path = folder_paths.get_full_path("loras", lora)
-            lora_path = get_instance_path(lora_path)
             model.load_lora_weights(lora_path, adapter_name=trigger_words)
             model.fuse_lora(lora_scale=lora_scale, adapter_names=[trigger_words,])
        
@@ -332,66 +301,25 @@ class HI_Diffusers_Model_Loader:
         model.enable_vae_tiling()
         apply_hidiffusion(model,apply_window_attn=apply_window_attn,model_type_str=model_type)
         model.enable_model_cpu_offload()  # need below apply_hidiffusion(model)
-     
-        if ip_adapter:
+        ip_adapter = False
+        if ip_ckpt is not None and clip_vision is not None:
             model.enable_freeu(s1=0.6, s2=0.4, b1=1.1, b2=1.2)
-            ip_model_dir_origin = get_instance_path(ip_path)
             device = "cuda"
-            if model_type == "stable-diffusion-xl-base-1.0":  # #ip-adapter_sdxl.bin
-                ip_model_path_xl = os.path.join(ip_path, "sdxl_models", "ip-adapter_sdxl.bin")
-               
-                if not os.path.exists(ip_model_path_xl):
-                    adapter_path_xl = hf_hub_download(
-                        repo_id="h94/IP-Adapter",
-                        subfolder="sdxl_models",
-                        filename="ip-adapter_sdxl.bin",
-                        local_dir=ip_model_dir_origin,
-                    )
-                else:
-                    adapter_path_xl = get_instance_path(ip_model_path_xl)
-                image_encoder_path_xl = get_instance_path(
-                    os.path.join(ip_path, "sdxl_models", "image_encoder", "model.safetensors"))
-                if not os.path.exists(ip_model_path_xl):
-                    os.makedirs(ip_model_path_xl)
-                ip_model_path_dir = get_instance_path(os.path.join(ip_path, "sdxl_models", "image_encoder"))
-                if not os.path.exists(image_encoder_path_xl):
-                    adapter_encoder_xl = hf_hub_download(
-                        repo_id="h94/IP-Adapter",
-                        subfolder="sdxl_models/image_encoder",
-                        local_dir=ip_model_dir_origin,
-                    )
-                else:
-                    adapter_encoder_xl = get_instance_path(ip_model_path_dir)
-                model = IPAdapterXL(model, adapter_encoder_xl, adapter_path_xl, device,
-                                    target_blocks=["up_blocks.0.attentions.1"])
-
-            elif model_type == "stable-diffusion-v1-5":  # SD1.5 ip-adapter_sd15.bin
-                # sd1.5
-                ip_model_path = os.path.join(ip_path, "models", "ip-adapter_sd15.bin")
-                if not os.path.exists(ip_model_path):
-                    adapter_path_sd = hf_hub_download(
-                        repo_id="h94/IP-Adapter",
-                        subfolder="models",
-                        filename="ip-adapter_sd15.bin",
-                        local_dir=ip_model_dir_origin,
-                    )
-                else:
-                    adapter_path_sd = get_instance_path(ip_model_path)
-
-                image_encoder_path = get_instance_path(
-                    os.path.join(ip_path, "models", "image_encoder", "model.safetensors"))
-                ip_model_encoder_dir = get_instance_path(os.path.join(ip_path, "models", "image_encoder"))
-                if not os.path.exists(image_encoder_path):
-                    adapter_encoder = hf_hub_download(
-                        repo_id="h94/IP-Adapter",
-                        subfolder="models/image_encoder",
-                        filename="model.safetensors",
-                        local_dir=ip_model_dir_origin,
-                    )
-                else:
-                    adapter_encoder = get_instance_path(ip_model_encoder_dir)
-                model = IPAdapter(model, adapter_encoder, adapter_path_sd, device, target_blocks=["block"])
+            image_encoder = load_clip(clip_vision)
+            if sd_type == "xl_base":
+                config_path=os.path.join(dir_path,"weights","sdxl","config.json")
+                image_encoder_config = OmegaConf.load(config_path)
+                model = IPAdapterXL(model, image_encoder, ip_ckpt, device,image_encoder_config,
+                                target_blocks=["up_blocks.0.attentions.1"])
+            elif sd_type == "v1":
+                config_path = os.path.join(dir_path, "weights", "sd15","config.json")
+                image_encoder_config = OmegaConf.load(config_path)
+                model = IPAdapter(model, image_encoder, ip_ckpt, device,image_encoder_config, target_blocks=["block"])
+            else:
+                raise "unsupport model,only support SDXL or SD1.5"
             torch.cuda.empty_cache()
+            ip_adapter=True
+            
         torch.cuda.empty_cache()
         pipe={"model":model,"controlnet_path":controlnet_path,"sd_type":sd_type,"lora":lora,"trigger_words":trigger_words,"ip_adapter":ip_adapter,"function_choice":function_choice}
         torch.cuda.empty_cache()
@@ -444,7 +372,7 @@ class Hi_Sampler:
         
         if ip_adapter:
             ip_image = kwargs.get("ip_image")
-            ip_image = input_size_adaptation_output(ip_image, pre_input, width, height)
+            #ip_image = input_size_adaptation_output(ip_image, pre_input, width, height)
             if lora != "none":
                 prompt = prompt + " " + trigger_words
             if  controlnet_path is None:

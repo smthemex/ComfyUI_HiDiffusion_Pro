@@ -7,19 +7,22 @@ HiDiffusion  From: [link](https://github.com/megvii-research/HiDiffusion)
 Update 
 ----
 
-**09/07**   
-*fix runway error/del repo /auto choice model type  
-*修复runwaybug / 去掉repo加载模型的方式  /自动选择模型的类别   s
+**09/08**   
+* adapter style now using  single file.
+* adapter style改成单体文件模式
+ 
 
 **Previous updates**
+*修复runwaybug / 去掉repo加载模型的方式  /自动选择模型的类别  
 * 增加adapter_style支持，SDXL需求的显存较大，虽然能跑CPU，但是不推荐，会爆显存，SD1.5测试没问题。  
 * 增加 manne加速Lora  
 * 加入controlnet-tile-sdxl的支持，内置图片预处理，默认512尺寸，新增apply_window_attn 条件控制。  
 * 修复节点连接逻辑，现在文生图模式，无需接入image，无controlnet也无需接入control_image   
 * 支持SDXL-lighting\Hyper\LCM\DMD2\的加速Unet，建议适当提高步数；    
 * 基于官方的更新，加入lora支持，需要填关键词；    
-* 加入skip，去掉意义不大的其他参数；          
-             
+* 加入skip，去掉意义不大的其他参数；     
+     
+ *fix runway error/del repo /auto choice model type             
 * Adding adapter_style support, SDXL requires a large amount of graphics memory. Although it can run on CPU, it is not recommended as it may cause graphics memory " explosion". SD1.5 testing is not a problem.   
 * add manne lighting lora  
 * Added support for control net file sdxl, built-in image preprocessing, default size of 512, and added condition control for apply_window_attn.   
@@ -63,25 +66,21 @@ yaml
 |     ├──any SDXL lighting  Unet 
 ```
 3.4 if using adapter style   
-如果不存放对应，运行时会自动下载。  If the corresponding file is not stored, it will be automatically downloaded at runtime.  
+
 ```
 ├── ComfyUI/models/photomaker
-|     ├──models/
 |         ├── ip-adapter_sd15.bin
-|         ├── image_encoder/
-|             ├── config.json
-|             ├── model.safetensors
-|     ├──sdxl_models/
 |         ├── ip-adapter_sdxl.bin
-|         ├── image_encoder/
-|             ├── config.json
-|             ├── model.safetensors
+├── ComfyUI/models/clip_vision
+|             ├── sdxl_model.safetensors  # rename from   sd15/ncoder/model.safetensors
+|             ├── sdm_model.safetensors  # rename from  sdxl/encoder/model.safetensors
+
 ```
 
 4 example
 -----
 
-new workflow example  最新的示例
+new workflow example   new
  ![](https://github.com/smthemex/ComfyUI_HiDiffusion_Pro/blob/main/example/new.png)
 
  sd1.5 using ip_adapter_style  使用ip_adapter_style  

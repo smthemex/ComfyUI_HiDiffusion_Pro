@@ -1,32 +1,144 @@
 {
-  "last_node_id": 5,
-  "last_link_id": 4,
+  "last_node_id": 9,
+  "last_link_id": 10,
   "nodes": [
     {
-      "id": 5,
+      "id": 3,
+      "type": "SaveImage",
+      "pos": [
+        4311,
+        -264
+      ],
+      "size": {
+        "0": 367.2918701171875,
+        "1": 381.46820068359375
+      },
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 9,
+          "label": "images"
+        }
+      ],
+      "properties": {},
+      "widgets_values": [
+        "ComfyUI"
+      ]
+    },
+    {
+      "id": 6,
+      "type": "LoadImage",
+      "pos": [
+        3473,
+        10
+      ],
+      "size": {
+        "0": 315,
+        "1": 314
+      },
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            10
+          ],
+          "shape": 3,
+          "label": "IMAGE",
+          "slot_index": 0
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null,
+          "shape": 3,
+          "label": "MASK"
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "4.jpg",
+        "image"
+      ]
+    },
+    {
+      "id": 8,
+      "type": "HI_Diffusers_Model_Loader",
+      "pos": [
+        3472,
+        -365
+      ],
+      "size": {
+        "0": 315,
+        "1": 322
+      },
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "pipe",
+          "type": "HIDIF_MODEL",
+          "links": [
+            7
+          ],
+          "slot_index": 0,
+          "shape": 3,
+          "label": "pipe"
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "HI_Diffusers_Model_Loader"
+      },
+      "widgets_values": [
+        "img2img",
+        "0SDXL\\juggernautXL_v8Rundiffusion.safetensors",
+        "none",
+        "sdxl_lightning_4step_unet.safetensors",
+        "none",
+        "none",
+        0.8,
+        "best quality",
+        "Euler",
+        false,
+        "none",
+        "none"
+      ]
+    },
+    {
+      "id": 9,
       "type": "Hi_Sampler",
       "pos": [
-        3915,
-        -197
+        3875,
+        -292
       ],
       "size": {
         "0": 400,
         "1": 426
       },
       "flags": {},
-      "order": 1,
+      "order": 2,
       "mode": 0,
       "inputs": [
         {
           "name": "pipe",
           "type": "HIDIF_MODEL",
-          "link": 3,
+          "link": 7,
           "label": "pipe"
         },
         {
           "name": "image",
           "type": "IMAGE",
-          "link": null,
+          "link": 10,
           "label": "image"
         },
         {
@@ -47,7 +159,7 @@
           "name": "image",
           "type": "IMAGE",
           "links": [
-            4
+            9
           ],
           "slot_index": 0,
           "shape": 3,
@@ -63,101 +175,39 @@
         0.5,
         1,
         512,
-        635048020868939,
+        1108821181920656,
         "randomize",
-        30,
-        7.5,
+        12,
+        3,
         2048,
         2048,
         1
-      ]
-    },
-    {
-      "id": 4,
-      "type": "HI_Diffusers_Model_Loader",
-      "pos": [
-        3512,
-        -184
-      ],
-      "size": [
-        366.36151183893753,
-        307.7217713270144
-      ],
-      "flags": {},
-      "order": 0,
-      "mode": 0,
-      "outputs": [
-        {
-          "name": "pipe",
-          "type": "HIDIF_MODEL",
-          "links": [
-            3
-          ],
-          "slot_index": 0,
-          "shape": 3,
-          "label": "pipe"
-        }
-      ],
-      "properties": {
-        "Node name for S&R": "HI_Diffusers_Model_Loader"
-      },
-      "widgets_values": [
-        "txt2img",
-        "0SDXL\\animagineXLV3_v30.safetensors",
-        "none",
-        "none",
-        "none",
-        "none",
-        0.8,
-        "best quality",
-        "DDIM",
-        false,
-        false
-      ]
-    },
-    {
-      "id": 3,
-      "type": "SaveImage",
-      "pos": [
-        4336,
-        -177
-      ],
-      "size": [
-        367.29185650870204,
-        381.4682013986403
-      ],
-      "flags": {},
-      "order": 2,
-      "mode": 0,
-      "inputs": [
-        {
-          "name": "images",
-          "type": "IMAGE",
-          "link": 4,
-          "label": "images"
-        }
-      ],
-      "properties": {},
-      "widgets_values": [
-        "ComfyUI"
       ]
     }
   ],
   "links": [
     [
-      3,
-      4,
+      7,
+      8,
       0,
-      5,
+      9,
       0,
       "HIDIF_MODEL"
     ],
     [
-      4,
-      5,
+      9,
+      9,
       0,
       3,
       0,
+      "IMAGE"
+    ],
+    [
+      10,
+      6,
+      0,
+      9,
+      1,
       "IMAGE"
     ]
   ],
@@ -165,10 +215,10 @@
   "config": {},
   "extra": {
     "ds": {
-      "scale": 1.283902517749519,
+      "scale": 1.0610764609500176,
       "offset": [
-        -3462.543452344591,
-        367.22629242211144
+        -3283.5070365830798,
+        461.2881609587324
       ]
     }
   },
