@@ -261,13 +261,9 @@ class HI_Diffusers_Model_Loader:
                 controlnet.load_state_dict(cn_state_dict, strict=False)
                 controlnet.to(torch.float16)
                 if function_choice == "img2img":
-                    model = StableDiffusionXLControlNetImg2ImgPipeline.from_single_file(ckpt_path,config=model_config,original_config=original_config_file,controlnet=controlnet,
-                                                                                       torch_dtype=torch.float16,
-                                                                                      )
+                    model = StableDiffusionXLControlNetImg2ImgPipeline.from_pipe(model,controlnet=controlnet)
                 else:
-                    model = StableDiffusionXLControlNetPipeline.from_single_file(
-                        ckpt_path, config=model_config,original_config=original_config_file, controlnet=controlnet,
-                        torch_dtype=torch.float16)
+                    model = StableDiffusionXLControlNetPipeline.from_pipe(model,controlnet=controlnet)
                     
             if unet_model in sdxl_lightning_list:
                 if unet_model.rsplit('.', 1)[-1] == "bin":
@@ -305,6 +301,7 @@ class HI_Diffusers_Model_Loader:
         if ip_ckpt is not None and clip_vision is not None:
             model.enable_freeu(s1=0.6, s2=0.4, b1=1.1, b2=1.2)
             device = "cuda"
+            remove_hidiffusion(model)
             image_encoder = load_clip(clip_vision)
             if sd_type == "xl_base":
                 config_path=os.path.join(dir_path,"weights","sdxl","config.json")
