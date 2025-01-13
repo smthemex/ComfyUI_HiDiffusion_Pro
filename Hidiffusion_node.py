@@ -14,8 +14,10 @@ from diffusers import (StableDiffusionXLPipeline, DiffusionPipeline, DDIMSchedul
                        EulerAncestralDiscreteScheduler, UniPCMultistepScheduler, AutoencoderKL,
                        StableDiffusionXLControlNetPipeline, DDPMScheduler, TCDScheduler, LCMScheduler,
                        StableDiffusionPipeline, StableDiffusionControlNetPipeline, StableDiffusionXLInpaintPipeline)
-from diffusers.loaders.single_file_utils import load_single_file_checkpoint,infer_diffusers_model_type
-
+try:
+    from diffusers.loaders.single_file_utils import load_single_file_checkpoint,infer_diffusers_model_type
+except:
+    from diffusers.loaders.single_file_utils import load_single_file_model_checkpoint as load_single_file_checkpoint,infer_model_type as infer_diffusers_model_type
 from .hidiffusion.hidiffusion import apply_hidiffusion,remove_hidiffusion
 import folder_paths
 from safetensors.torch import load_file
@@ -197,8 +199,12 @@ class HI_Diffusers_Model_Loader:
         sd_type=""
         if ckpt_path:
             sd = load_single_file_checkpoint(ckpt_path)
-            sd_type = infer_diffusers_model_type(sd)
-            del sd
+            try:
+               sd_type = infer_diffusers_model_type(sd)
+               del sd
+            except:
+                raise "diffuser need >0.27.2"
+            
     
         vae_id=vae_id if vae_id!="none" else None
         controlnet_path=folder_paths.get_full_path("controlnet", controlnet_model) if controlnet_model!="none" else None
