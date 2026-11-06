@@ -1,7 +1,7 @@
 [project]
 name = "comfyui_hidiffusion_pro"
-description = "A HiDiffusion node for ComfyUI."
-version = "1.0.1"
+description = "HiDiffusion (RAUNet + MSW-MSA) as a native ComfyUI MODEL patch node - torch only, no diffusers/transformers."
+version = "2.0.0"
 license = { file = "LICENSE" }
 
 [project.urls]
