@@ -1,0 +1,553 @@
+{
+  "id": "f3f9ebac-656f-4e22-9970-e0f4e1091cdf",
+  "revision": 0,
+  "last_node_id": 17,
+  "last_link_id": 33,
+  "nodes": [
+    {
+      "id": 2,
+      "type": "CLIPTextEncode",
+      "pos": [
+        385.86634641432863,
+        118.61544147040803
+      ],
+      "size": [
+        315,
+        120
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "clip",
+          "name": "clip",
+          "type": "CLIP",
+          "link": 27
+        }
+      ],
+      "outputs": [
+        {
+          "label": "CONDITIONING",
+          "name": "CONDITIONING",
+          "type": "CONDITIONING",
+          "slot_index": 0,
+          "links": [
+            19
+          ]
+        }
+      ],
+      "title": "positive",
+      "properties": {
+        "Node name for S&R": "CLIPTextEncode"
+      },
+      "widgets_values": [
+        "Standing tall amidst the ruins, a stone golem awakens, vines and flowers sprouting from the crevices in its body"
+      ],
+      "widgets_values_named": {
+        "text": "Standing tall amidst the ruins, a stone golem awakens, vines and flowers sprouting from the crevices in its body"
+      }
+    },
+    {
+      "id": 3,
+      "type": "CLIPTextEncode",
+      "pos": [
+        389.40441837074866,
+        310.0728905202828
+      ],
+      "size": [
+        315,
+        120
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "clip",
+          "name": "clip",
+          "type": "CLIP",
+          "link": 33
+        }
+      ],
+      "outputs": [
+        {
+          "label": "CONDITIONING",
+          "name": "CONDITIONING",
+          "type": "CONDITIONING",
+          "slot_index": 0,
+          "links": [
+            20
+          ]
+        }
+      ],
+      "title": "negative",
+      "properties": {
+        "Node name for S&R": "CLIPTextEncode"
+      },
+      "widgets_values": [
+        "blurry, ugly, duplicate, poorly drawn face, deformed, mosaic, artifacts, bad limbs"
+      ],
+      "widgets_values_named": {
+        "text": "blurry, ugly, duplicate, poorly drawn face, deformed, mosaic, artifacts, bad limbs"
+      }
+    },
+    {
+      "id": 4,
+      "type": "EmptyLatentImage",
+      "pos": [
+        397.38138446126425,
+        494.44248726315595
+      ],
+      "size": [
+        315,
+        120
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "label": "LATENT",
+          "name": "LATENT",
+          "type": "LATENT",
+          "slot_index": 0,
+          "links": [
+            22
+          ]
+        }
+      ],
+      "title": "2048x2048 latent",
+      "properties": {
+        "Node name for S&R": "EmptyLatentImage"
+      },
+      "widgets_values": [
+        2048,
+        2048,
+        1
+      ],
+      "widgets_values_named": {
+        "width": 2048,
+        "height": 2048,
+        "batch_size": 1
+      }
+    },
+    {
+      "id": 5,
+      "type": "HiDiffusionApply",
+      "pos": [
+        772.7452930615466,
+        280.92092203440734
+      ],
+      "size": [
+        294.2576406171137,
+        338.00004531233094
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "model",
+          "name": "model",
+          "type": "MODEL",
+          "link": 15
+        }
+      ],
+      "outputs": [
+        {
+          "label": "MODEL",
+          "name": "model",
+          "type": "MODEL",
+          "slot_index": 0,
+          "links": [
+            18
+          ]
+        }
+      ],
+      "title": "HiDiffusion patch MODEL (native)",
+      "properties": {
+        "Node name for S&R": "HiDiffusionApply"
+      },
+      "widgets_values": [
+        "auto",
+        true,
+        true,
+        true,
+        -1,
+        -1,
+        false,
+        "fixed",
+        0,
+        -1
+      ],
+      "widgets_values_named": {
+        "model_arch": "auto",
+        "apply_raunet": true,
+        "apply_window_attn": true,
+        "aggressive_raunet": true,
+        "t1_ratio": -1,
+        "t2_ratio": -1,
+        "controlnet_t2i": false,
+        "window_shift": "fixed",
+        "window_shift_index": 0,
+        "aggressive_start_ratio": -1
+      },
+      "color": "#322",
+      "bgcolor": "#533"
+    },
+    {
+      "id": 8,
+      "type": "SaveImage",
+      "pos": [
+        1096.055917341725,
+        100.66350340989516
+      ],
+      "size": [
+        421.238368999782,
+        574.7964492210178
+      ],
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "images",
+          "name": "images",
+          "type": "IMAGE",
+          "link": 25
+        }
+      ],
+      "outputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "links": null
+        }
+      ],
+      "title": "save image",
+      "properties": {
+        "Node name for S&R": "SaveImage"
+      },
+      "widgets_values": [
+        "HiDiffusion_native"
+      ],
+      "widgets_values_named": {
+        "filename_prefix": "HiDiffusion_native"
+      }
+    },
+    {
+      "id": 10,
+      "type": "CheckpointLoaderSimple",
+      "pos": [
+        -48.58575749562155,
+        161.31560755035264
+      ],
+      "size": [
+        397.70645403703594,
+        119.0734176788223
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            15
+          ]
+        },
+        {
+          "name": "CLIP",
+          "type": "CLIP",
+          "links": [
+            32
+          ]
+        },
+        {
+          "name": "VAE",
+          "type": "VAE",
+          "links": [
+            31
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CheckpointLoaderSimple"
+      },
+      "widgets_values": [
+        "sd_xl_base_1.0.safetensors"
+      ],
+      "widgets_values_named": {
+        "ckpt_name": "sd_xl_base_1.0.safetensors"
+      }
+    },
+    {
+      "id": 11,
+      "type": "KSampler",
+      "pos": [
+        814.7279570584597,
+        -62.60389786578242
+      ],
+      "size": [
+        270,
+        262
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 18
+        },
+        {
+          "name": "positive",
+          "type": "CONDITIONING",
+          "link": 19
+        },
+        {
+          "name": "negative",
+          "type": "CONDITIONING",
+          "link": 20
+        },
+        {
+          "name": "latent_image",
+          "type": "LATENT",
+          "link": 22
+        }
+      ],
+      "outputs": [
+        {
+          "name": "LATENT",
+          "type": "LATENT",
+          "links": [
+            23
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "KSampler"
+      },
+      "widgets_values": [
+        451633410537114,
+        "randomize",
+        20,
+        7.5,
+        "euler",
+        "simple",
+        1
+      ],
+      "widgets_values_named": {
+        "seed": 451633410537114,
+        "control_after_generate": "randomize",
+        "steps": 20,
+        "cfg": 7.5,
+        "sampler_name": "euler",
+        "scheduler": "simple",
+        "denoise": 1
+      }
+    },
+    {
+      "id": 12,
+      "type": "VAEDecode",
+      "pos": [
+        1142.727553383565,
+        -4.830189033982229
+      ],
+      "size": [
+        140,
+        46
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "samples",
+          "type": "LATENT",
+          "link": 23
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "link": 31
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            25
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "VAEDecode"
+      }
+    },
+    {
+      "id": 16,
+      "type": "CLIPSetLastLayer",
+      "pos": [
+        419.47760542507854,
+        -20.775779837929235
+      ],
+      "size": [
+        233.15049051019173,
+        85.99999110150023
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "showAdvanced": true,
+      "inputs": [
+        {
+          "name": "clip",
+          "type": "CLIP",
+          "link": 32
+        }
+      ],
+      "outputs": [
+        {
+          "name": "CLIP",
+          "type": "CLIP",
+          "links": [
+            27,
+            33
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CLIPSetLastLayer"
+      },
+      "widgets_values": [
+        -1
+      ],
+      "widgets_values_named": {
+        "stop_at_clip_layer": -1
+      }
+    }
+  ],
+  "links": [
+    [
+      15,
+      10,
+      0,
+      5,
+      0,
+      "MODEL"
+    ],
+    [
+      18,
+      5,
+      0,
+      11,
+      0,
+      "MODEL"
+    ],
+    [
+      19,
+      2,
+      0,
+      11,
+      1,
+      "CONDITIONING"
+    ],
+    [
+      20,
+      3,
+      0,
+      11,
+      2,
+      "CONDITIONING"
+    ],
+    [
+      22,
+      4,
+      0,
+      11,
+      3,
+      "LATENT"
+    ],
+    [
+      23,
+      11,
+      0,
+      12,
+      0,
+      "LATENT"
+    ],
+    [
+      25,
+      12,
+      0,
+      8,
+      0,
+      "IMAGE"
+    ],
+    [
+      27,
+      16,
+      0,
+      2,
+      0,
+      "CLIP"
+    ],
+    [
+      31,
+      10,
+      2,
+      12,
+      1,
+      "VAE"
+    ],
+    [
+      32,
+      10,
+      1,
+      16,
+      0,
+      "CLIP"
+    ],
+    [
+      33,
+      16,
+      0,
+      3,
+      0,
+      "CLIP"
+    ]
+  ],
+  "groups": [
+    {
+      "id": 1,
+      "title": "Group",
+      "bounding": [
+        -54.67264083662903,
+        -124.33164011637369,
+        1597.6802564919449,
+        816.9158567890261
+      ],
+      "color": "#3f789e",
+      "flags": {}
+    }
+  ],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.843416856492031,
+      "offset": [
+        373.77239984487744,
+        203.27943699697903
+      ]
+    },
+    "frontendVersion": "1.58.5"
+  },
+  "version": 0.4
+}
